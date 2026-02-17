@@ -71,6 +71,10 @@ class Match(BaseModel):
     status: str
     home_form: Optional[str] = None
     away_form: Optional[str] = None
+    home_odds: float = 2.0
+    away_odds: float = 2.0
+    draw_odds: Optional[float] = None
+    last_odds_update: str = Field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
     created_at: str = Field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
 
 class Analysis(BaseModel):
