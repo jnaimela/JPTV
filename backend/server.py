@@ -176,6 +176,38 @@ async def get_match(match_id: str):
         raise HTTPException(status_code=404, detail="Match not found")
     return match
 
+# Update live odds (simulated)
+@api_router.post("/matches/{match_id}/update-odds")
+async def update_match_odds(match_id: str):
+    """Update match odds (simulated live updates)"""
+    match = await db.matches.find_one({"id": match_id}, {"_id": 0})
+    if not match:
+        raise HTTPException(status_code=404, detail="Match not found")
+    
+    # Simulate odds changes (±0.1 to ±0.3)
+    home_change = random.uniform(-0.3, 0.3)
+    away_change = random.uniform(-0.3, 0.3)
+    
+    new_home_odds = max(1.1, min(10.0, match.get("home_odds", 2.0) + home_change))
+    new_away_odds = max(1.1, min(10.0, match.get("away_odds", 2.0) + away_change))
+    
+    update_data = {
+        "home_odds": round(new_home_odds, 2),
+        "away_odds": round(new_away_odds, 2),
+        "last_odds_update": datetime.now(timezone.utc).isoformat()
+    }
+    
+    if match.get("draw_odds"):
+        draw_change = random.uniform(-0.2, 0.2)
+        new_draw_odds = max(1.1, min(10.0, match.get("draw_odds", 3.0) + draw_change))
+        update_data["draw_odds"] = round(new_draw_odds, 2)
+    
+    await db.matches.update_one({"id": match_id}, {"$set": update_data})
+    
+    updated_match = await db.matches.find_one({"id": match_id}, {"_id": 0})
+    return updated_match
+
+
 # Analysis Routes
 @api_router.get("/analyses")
 async def get_analyses(sport: Optional[str] = None):
