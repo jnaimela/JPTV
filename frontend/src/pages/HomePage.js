@@ -214,6 +214,32 @@ export default function HomePage() {
                 )}
               </div>
 
+              {/* Live Odds */}
+              {match.home_odds && match.away_odds && (
+                <div className="pt-3 border-t border-border">
+                  <div className="flex items-center justify-between text-xs text-muted-foreground mb-2">
+                    <span>Live-kertoimet</span>
+                    <span className="text-primary animate-pulse">●</span>
+                  </div>
+                  <div className="grid grid-cols-3 gap-2">
+                    <div className="text-center p-2 rounded bg-primary/10 border border-primary/20">
+                      <div className="text-xs text-muted-foreground mb-1">Koti</div>
+                      <div className="font-heading text-lg font-bold text-primary">{match.home_odds}</div>
+                    </div>
+                    {match.draw_odds && (
+                      <div className="text-center p-2 rounded bg-secondary/10 border border-secondary/20">
+                        <div className="text-xs text-muted-foreground mb-1">Tasapeli</div>
+                        <div className="font-heading text-lg font-bold text-secondary">{match.draw_odds}</div>
+                      </div>
+                    )}
+                    <div className="text-center p-2 rounded bg-accent/10 border border-accent/20">
+                      <div className="text-xs text-muted-foreground mb-1">Vieras</div>
+                      <div className="font-heading text-lg font-bold text-accent">{match.away_odds}</div>
+                    </div>
+                  </div>
+                </div>
+              )}
+
               <Button 
                 onClick={() => navigate(`/analysis/${match.id}`)}
                 className="w-full gradient-button font-bold uppercase tracking-wider group-hover:scale-105 transition-transform"
