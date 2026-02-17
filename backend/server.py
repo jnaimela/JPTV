@@ -418,6 +418,21 @@ async def seed_data():
     await db.matches.delete_many({})
     await db.analyses.delete_many({})
     
+    # Create admin user if not exists
+    admin_email = "j.niemelanjml@gmail.com"
+    admin_exists = await db.users.find_one({"email": admin_email}, {"_id": 0})
+    if not admin_exists:
+        admin_password_hash = bcrypt.hashpw("admin123".encode(), bcrypt.gensalt()).decode()
+        admin_user = User(
+            email=admin_email,
+            username="JPTips Admin",
+            password_hash=admin_password_hash,
+            subscription_tier="admin",
+            is_admin=True
+        )
+        await db.users.insert_one(admin_user.model_dump())
+        logger.info(f"Admin user created: {admin_email}")
+    
     # Football matches - major leagues
     football_matches = [
         # Premier League
