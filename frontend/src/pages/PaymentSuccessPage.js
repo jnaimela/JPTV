@@ -22,6 +22,7 @@ export default function PaymentSuccessPage() {
     if (sessionId) {
       checkPaymentStatus();
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [sessionId, attempts]);
 
   const checkPaymentStatus = async () => {
