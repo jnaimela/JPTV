@@ -1,6 +1,9 @@
 .App {
   min-height: 100vh;
-  background: hsl(var(--background));
+  background: #000000;
+  background-image: 
+    radial-gradient(circle at 20% 20%, rgba(61, 22, 175, 0.1) 0%, transparent 50%),
+    radial-gradient(circle at 80% 80%, rgba(211, 0, 160, 0.1) 0%, transparent 50%);
 }
 
 .analysis-preview {
@@ -14,20 +17,45 @@
   bottom: 0;
   left: 0;
   right: 0;
-  height: 120px;
+  height: 150px;
   background: linear-gradient(to bottom, transparent, hsl(var(--card)));
   pointer-events: none;
 }
 
-.stat-bar {
-  transition: width 0.5s ease-out;
-}
-
 .match-card {
-  transition: all 0.2s ease;
+  transition: all 0.3s ease;
+  border: 1px solid transparent;
+  background: linear-gradient(hsl(var(--card)), hsl(var(--card))) padding-box,
+              linear-gradient(135deg, rgba(61, 22, 175, 0.3), rgba(143, 58, 240, 0.3), rgba(211, 0, 160, 0.3)) border-box;
 }
 
 .match-card:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 8px 16px rgba(0,0,0,0.1);
+  transform: translateY(-4px);
+  border: 1px solid transparent;
+  background: linear-gradient(hsl(var(--card)), hsl(var(--card))) padding-box,
+              linear-gradient(135deg, #3D16AF, #8F3AF0, #D300A0) border-box;
+  box-shadow: 0 10px 40px rgba(143, 58, 240, 0.3);
+}
+
+.gradient-button {
+  background: linear-gradient(135deg, #3D16AF 0%, #8F3AF0 50%, #D300A0 100%);
+  transition: all 0.3s ease;
+}
+
+.gradient-button:hover {
+  transform: scale(1.05);
+  box-shadow: 0 0 30px rgba(143, 58, 240, 0.6);
+}
+
+.stat-bar {
+  transition: width 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.probability-circle {
+  background: conic-gradient(
+    from 0deg,
+    #3D16AF 0%,
+    #8F3AF0 var(--percentage),
+    rgba(255, 255, 255, 0.1) var(--percentage)
+  );
 }

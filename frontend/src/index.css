@@ -1,5 +1,5 @@
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap');
-@import url('https://fonts.googleapis.com/css2?family=Roboto+Slab:wght@700;900&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@700;900&display=swap');
 
 @tailwind base;
 @tailwind components;
@@ -13,46 +13,46 @@
     --card-foreground: 210 20% 15%;
     --popover: 0 0% 100%;
     --popover-foreground: 210 20% 15%;
-    --primary: 14 100% 60%;
+    --primary: 266 100% 50%;
     --primary-foreground: 0 0% 100%;
-    --secondary: 210 50% 45%;
+    --secondary: 237 91% 39%;
     --secondary-foreground: 0 0% 100%;
+    --accent: 326 100% 43%;
+    --accent-foreground: 0 0% 100%;
     --muted: 210 15% 90%;
     --muted-foreground: 210 15% 45%;
-    --accent: 14 100% 60%;
-    --accent-foreground: 0 0% 100%;
     --destructive: 0 84% 60%;
     --destructive-foreground: 0 0% 100%;
     --border: 210 15% 85%;
     --input: 210 15% 90%;
-    --ring: 14 100% 60%;
+    --ring: 266 100% 50%;
     --success: 142 71% 45%;
     --warning: 38 92% 50%;
     --error: 0 84% 60%;
     --info: 199 89% 48%;
-    --radius: 0.5rem;
+    --radius: 0.75rem;
   }
 
   .dark {
-    --background: 215 35% 8%;
-    --foreground: 210 30% 96%;
-    --card: 215 30% 11%;
-    --card-foreground: 210 30% 96%;
-    --popover: 215 30% 11%;
-    --popover-foreground: 210 30% 96%;
-    --primary: 14 100% 60%;
+    --background: 0 0% 0%;
+    --foreground: 0 0% 98%;
+    --card: 240 10% 8%;
+    --card-foreground: 0 0% 98%;
+    --popover: 240 10% 8%;
+    --popover-foreground: 0 0% 98%;
+    --primary: 266 100% 60%;
     --primary-foreground: 0 0% 100%;
-    --secondary: 210 50% 45%;
+    --secondary: 237 91% 50%;
     --secondary-foreground: 0 0% 100%;
-    --muted: 215 20% 20%;
-    --muted-foreground: 210 20% 60%;
-    --accent: 14 100% 60%;
+    --accent: 326 100% 50%;
     --accent-foreground: 0 0% 100%;
+    --muted: 240 10% 15%;
+    --muted-foreground: 240 5% 60%;
     --destructive: 0 62% 50%;
-    --destructive-foreground: 210 30% 96%;
-    --border: 215 20% 18%;
-    --input: 215 20% 18%;
-    --ring: 14 100% 60%;
+    --destructive-foreground: 0 0% 98%;
+    --border: 240 10% 18%;
+    --input: 240 10% 18%;
+    --ring: 266 100% 60%;
     --success: 142 71% 45%;
     --warning: 38 92% 50%;
     --error: 0 62% 50%;
@@ -72,16 +72,31 @@
     font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
   }
   h1, h2, h3, h4, h5, h6 {
-    font-family: 'Roboto Slab', serif;
+    font-family: 'Orbitron', sans-serif;
     font-weight: 700;
   }
 }
 
 @layer utilities {
   .font-heading {
-    font-family: 'Roboto Slab', serif;
+    font-family: 'Orbitron', sans-serif;
   }
   .font-body {
     font-family: 'Inter', sans-serif;
+  }
+  .gradient-text {
+    background: linear-gradient(135deg, #3D16AF 0%, #8F3AF0 50%, #D300A0 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+  .gradient-border {
+    border-image: linear-gradient(135deg, #3D16AF, #8F3AF0, #D300A0) 1;
+  }
+  .neon-glow {
+    box-shadow: 0 0 20px rgba(143, 58, 240, 0.5), 0 0 40px rgba(143, 58, 240, 0.3);
+  }
+  .neon-text {
+    text-shadow: 0 0 10px rgba(143, 58, 240, 0.8), 0 0 20px rgba(143, 58, 240, 0.5);
   }
 }
