@@ -52,11 +52,18 @@ export const Navigation = () => {
                 </Button>
               </>
             ) : (
-              <Link to="/pricing" data-testid="nav-pricing">
-                <Button className="gradient-button font-semibold">
-                  Aloita ilmaiseksi
-                </Button>
-              </Link>
+              <>
+                <Link to="/pricing" data-testid="nav-login">
+                  <Button variant="outline" className="border-primary/40 hover:border-primary font-semibold">
+                    Kirjaudu sisään
+                  </Button>
+                </Link>
+                <Link to="/pricing" data-testid="nav-pricing">
+                  <Button className="gradient-button font-semibold">
+                    Aloita ilmaiseksi
+                  </Button>
+                </Link>
+              </>
             )}
           </div>
         </div>
