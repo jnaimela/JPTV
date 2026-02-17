@@ -485,7 +485,93 @@ async def seed_data():
     
     await db.matches.insert_many(matches)
     
-    return {"message": "Data seeded successfully", "matches": len(matches)}
+    return {"message": "Data seeded successfully", "matches": len(matches), "admin_created": not admin_exists}
+
+# News endpoint
+@api_router.get("/news")
+async def get_news():
+    """Get latest sports news"""
+    news_items = [
+        {
+            "id": "1",
+            "title": "Manchester City voitti Arsenalin dramaattisessa ottelussa",
+            "summary": "Pep Guardiolan Manchester City voitti Arsenal 2-1 jännittävässä Premier League -ottelussa Etihad Stadiumilla.",
+            "source": "ESPN",
+            "published_at": (datetime.now(timezone.utc) - timedelta(hours=2)).isoformat(),
+            "category": "Football"
+        },
+        {
+            "id": "2",
+            "title": "Lakers jatkaa voittoputkeaan NBA:ssa",
+            "summary": "Los Angeles Lakers voitti Boston Celticsin 115-110 ja jatkaa vahvaa kauttaan.",
+            "source": "NBA.com",
+            "published_at": (datetime.now(timezone.utc) - timedelta(hours=5)).isoformat(),
+            "category": "Basketball"
+        },
+        {
+            "id": "3",
+            "title": "Djokovic Australian Openin finaalissa",
+            "summary": "Novak Djokovic eteni Australian Openin finaaliin voitettuaan Jannik Sinnerin viiden erän taistelussa.",
+            "source": "ATP Tour",
+            "published_at": (datetime.now(timezone.utc) - timedelta(hours=8)).isoformat(),
+            "category": "Tennis"
+        },
+        {
+            "id": "4",
+            "title": "Real Madrid vahvistaa johtoa La Ligassa",
+            "summary": "Real Madrid voitti Barcelonan El Clásicossa 3-1 ja kasvatti johtoaan sarjassa.",
+            "source": "Marca",
+            "published_at": (datetime.now(timezone.utc) - timedelta(hours=12)).isoformat(),
+            "category": "Football"
+        },
+        {
+            "id": "5",
+            "title": "NHL: Colorado Avalanche pudotti Vegas Golden Knightsin",
+            "summary": "Colorado Avalanche voitti Vegas Golden Knightsin 4-2 ja jatkaa kohti pudotuspelejä.",
+            "source": "NHL.com",
+            "published_at": (datetime.now(timezone.utc) - timedelta(hours=15)).isoformat(),
+            "category": "Ice Hockey"
+        }
+    ]
+    return news_items
+
+# Live scores endpoint
+@api_router.get("/live-scores")
+async def get_live_scores():
+    """Get current live scores"""
+    live_scores = [
+        {
+            "id": "live1",
+            "home_team": "Liverpool",
+            "away_team": "Chelsea",
+            "home_score": 2,
+            "away_score": 1,
+            "minute": "78'",
+            "status": "live",
+            "league": "Premier League"
+        },
+        {
+            "id": "live2",
+            "home_team": "Inter Milan",
+            "away_team": "AC Milan",
+            "home_score": 1,
+            "away_score": 1,
+            "minute": "HT",
+            "status": "halftime",
+            "league": "Serie A"
+        },
+        {
+            "id": "live3",
+            "home_team": "Boston Bruins",
+            "away_team": "Toronto Maple Leafs",
+            "home_score": 3,
+            "away_score": 2,
+            "minute": "2nd Period",
+            "status": "live",
+            "league": "NHL"
+        }
+    ]
+    return live_scores
 
 app.include_router(api_router)
 
