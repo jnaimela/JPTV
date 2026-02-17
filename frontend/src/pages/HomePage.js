@@ -8,8 +8,7 @@ import { Button } from '../components/ui/button';
 import { Card } from '../components/ui/card';
 import { Badge } from '../components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../components/ui/tabs';
-import { TrendingUp, Calendar, Trophy } from 'lucide-react';
-import { toast } from 'sonner';
+import { TrendingUp, Calendar, Trophy, Zap, BarChart3, Target } from 'lucide-react';
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
 const API = `${BACKEND_URL}/api`;
@@ -57,46 +56,49 @@ export default function HomePage() {
       <div className="min-h-screen">
         <Navigation />
         <div className="flex items-center justify-center h-96">
-          <div className="text-primary text-2xl font-heading">Ladataan...</div>
+          <div className="text-primary text-2xl font-heading neon-text">Ladataan...</div>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-background" data-testid="home-page">
+    <div className="min-h-screen" data-testid="home-page">
       <Navigation />
       
       {/* Hero Section */}
-      <div className="bg-gradient-to-br from-secondary/10 via-background to-primary/5 border-b border-border">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
-          <div className="text-center space-y-6">
-            <div className="inline-flex items-center gap-2 bg-primary/10 text-primary px-4 py-2 rounded-full text-sm font-semibold">
-              <TrendingUp className="w-4 h-4" />
-              AI-pohjaiset analyysit
+      <div className="relative overflow-hidden border-b border-primary/20">
+        <div className="absolute inset-0 bg-gradient-to-br from-primary/10 via-transparent to-accent/10"></div>
+        <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20">
+          <div className="text-center space-y-8">
+            <div className="inline-flex items-center gap-2 bg-primary/10 border border-primary/30 text-primary px-4 py-2 rounded-full text-sm font-semibold neon-glow">
+              <Zap className="w-4 h-4" />
+              GPT-5.2 Teko\u00e4ly + Todenn\u00e4k\u00f6isyyslaskelmat
             </div>
-            <h1 className="font-heading text-4xl sm:text-5xl lg:text-6xl font-bold tracking-tight" data-testid="hero-title">
-              Asiantuntija-analyysit<br />
-              <span className="text-primary">jokaiseen otteluun</span>
+            <h1 className="font-heading text-4xl sm:text-5xl lg:text-7xl font-bold tracking-tight" data-testid="hero-title">
+              <span className="gradient-text neon-text">Asiantuntija</span><br />
+              <span className="text-foreground">Analyysit</span>
             </h1>
-            <p className="text-lg sm:text-xl text-muted-foreground max-w-2xl mx-auto" data-testid="hero-subtitle">
-              Syvälliset tilastolliset analyysit, vedonlyöntivinkit ja ennusteet suurimpiin urheilusarjoihin
+            <p className="text-lg sm:text-xl text-muted-foreground max-w-2xl mx-auto leading-relaxed" data-testid="hero-subtitle">
+              Syvälliset tilastolliset analyysit, vedonlyöntivinkit ja ennusteet<br />
+              suurimpiin urheilusarjoihin - yksi ilmainen analyysi käytettävissä!
             </p>
             {!user && (
-              <div className="flex flex-col sm:flex-row gap-4 justify-center">
+              <div className="flex flex-col sm:flex-row gap-4 justify-center pt-4">
                 <Button 
                   onClick={() => setAuthOpen(true)} 
                   size="lg" 
-                  className="bg-primary hover:bg-primary/90 text-lg px-8 font-semibold"
+                  className="gradient-button text-lg px-10 py-6 font-bold uppercase tracking-wider"
                   data-testid="hero-cta-button"
                 >
+                  <Zap className="w-5 h-5 mr-2" />
                   Aloita ilmaiseksi
                 </Button>
                 <Button 
                   onClick={() => navigate('/pricing')} 
                   size="lg" 
                   variant="outline"
-                  className="text-lg px-8 font-semibold"
+                  className="text-lg px-10 py-6 font-semibold border-primary/30 hover:border-primary"
                   data-testid="hero-pricing-button"
                 >
                   Näytä hinnat
@@ -108,33 +110,34 @@ export default function HomePage() {
       </div>
 
       {/* Matches Section */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-        <div className="mb-8">
-          <h2 className="font-heading text-3xl font-bold mb-6" data-testid="analyses-heading">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
+        <div className="mb-10">
+          <h2 className="font-heading text-4xl font-bold mb-2 gradient-text" data-testid="analyses-heading">
             Tulevat analyysit
           </h2>
-          
-          <Tabs value={selectedSport} onValueChange={setSelectedSport} className="w-full" data-testid="sport-tabs">
-            <TabsList className="mb-6">
-              <TabsTrigger value="all">Kaikki</TabsTrigger>
-              <TabsTrigger value="Football">Jalkapallo</TabsTrigger>
-              <TabsTrigger value="Ice Hockey">Jääkiekko</TabsTrigger>
-              <TabsTrigger value="Basketball">Koripallo</TabsTrigger>
-              <TabsTrigger value="Tennis">Tennis</TabsTrigger>
-            </TabsList>
-          </Tabs>
+          <p className="text-muted-foreground">Valitse ottelu ja näe yksityiskohtainen analyysi</p>
         </div>
+
+        <Tabs value={selectedSport} onValueChange={setSelectedSport} className="w-full mb-10" data-testid="sport-tabs">
+          <TabsList className="bg-card border border-primary/20">
+            <TabsTrigger value="all">Kaikki</TabsTrigger>
+            <TabsTrigger value="Football">Jalkapallo</TabsTrigger>
+            <TabsTrigger value="Ice Hockey">Jääkiekko</TabsTrigger>
+            <TabsTrigger value="Basketball">Koripallo</TabsTrigger>
+            <TabsTrigger value="Tennis">Tennis</TabsTrigger>
+          </TabsList>
+        </Tabs>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6" data-testid="matches-grid">
           {matches.map((match) => (
             <Card 
               key={match.id} 
-              className="match-card p-6 space-y-4 hover:shadow-lg cursor-pointer"
+              className="match-card p-6 space-y-5 cursor-pointer group"
               onClick={() => navigate(`/analysis/${match.id}`)}
               data-testid={`match-card-${match.id}`}
             >
               <div className="flex items-start justify-between">
-                <Badge variant="outline" className="text-xs" data-testid={`league-badge-${match.id}`}>
+                <Badge variant="outline" className="text-xs border-primary/40 text-primary" data-testid={`league-badge-${match.id}`}>
                   {match.league}
                 </Badge>
                 <div className="flex items-center gap-1 text-xs text-muted-foreground">
@@ -143,30 +146,30 @@ export default function HomePage() {
                 </div>
               </div>
 
-              <div className="space-y-3">
+              <div className="space-y-4">
                 <div className="text-center" data-testid={`teams-${match.id}`}>
-                  <div className="font-semibold text-lg">{match.home_team}</div>
-                  <div className="text-muted-foreground text-sm my-2">vs</div>
-                  <div className="font-semibold text-lg">{match.away_team}</div>
+                  <div className="font-bold text-lg group-hover:text-primary transition-colors">{match.home_team}</div>
+                  <div className="text-muted-foreground text-sm my-3 font-semibold">VS</div>
+                  <div className="font-bold text-lg group-hover:text-primary transition-colors">{match.away_team}</div>
                 </div>
 
                 {match.home_form && match.away_form && (
-                  <div className="flex justify-between text-xs">
+                  <div className="flex justify-between text-xs pt-3 border-t border-border">
                     <div className="flex gap-1">
                       {match.home_form.split('').map((result, i) => (
-                        <span key={i} className={`w-5 h-5 rounded-full flex items-center justify-center ${
-                          result === 'W' ? 'bg-green-500/20 text-green-500' : 
-                          result === 'D' ? 'bg-yellow-500/20 text-yellow-500' : 
-                          'bg-red-500/20 text-red-500'
+                        <span key={i} className={`w-6 h-6 rounded-full flex items-center justify-center font-bold ${
+                          result === 'W' ? 'bg-green-500/20 text-green-400' : 
+                          result === 'D' ? 'bg-yellow-500/20 text-yellow-400' : 
+                          'bg-red-500/20 text-red-400'
                         }`}>{result}</span>
                       ))}
                     </div>
                     <div className="flex gap-1">
                       {match.away_form.split('').map((result, i) => (
-                        <span key={i} className={`w-5 h-5 rounded-full flex items-center justify-center ${
-                          result === 'W' ? 'bg-green-500/20 text-green-500' : 
-                          result === 'D' ? 'bg-yellow-500/20 text-yellow-500' : 
-                          'bg-red-500/20 text-red-500'
+                        <span key={i} className={`w-6 h-6 rounded-full flex items-center justify-center font-bold ${
+                          result === 'W' ? 'bg-green-500/20 text-green-400' : 
+                          result === 'D' ? 'bg-yellow-500/20 text-yellow-400' : 
+                          'bg-red-500/20 text-red-400'
                         }`}>{result}</span>
                       ))}
                     </div>
@@ -175,9 +178,10 @@ export default function HomePage() {
               </div>
 
               <Button 
-                className="w-full bg-primary hover:bg-primary/90 font-semibold"
+                className="w-full gradient-button font-bold uppercase tracking-wider group-hover:scale-105 transition-transform"
                 data-testid={`view-analysis-${match.id}`}
               >
+                <Target className="w-4 h-4 mr-2" />
                 Näytä analyysi
               </Button>
             </Card>
@@ -185,8 +189,8 @@ export default function HomePage() {
         </div>
 
         {matches.length === 0 && (
-          <Card className="p-12 text-center" data-testid="no-matches">
-            <Trophy className="w-16 h-16 text-muted-foreground mx-auto mb-4" />
+          <Card className="p-16 text-center border-primary/20" data-testid="no-matches">
+            <Trophy className="w-20 h-20 text-primary/50 mx-auto mb-4" />
             <div className="text-muted-foreground text-lg">
               Ei otteluita valitulle lajille
             </div>
@@ -195,30 +199,31 @@ export default function HomePage() {
       </div>
 
       {/* Features Section */}
-      <div className="bg-muted/30 py-16 border-t border-border">
+      <div className="border-t border-primary/20 py-20">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <h2 className="font-heading text-3xl font-bold text-center mb-12">Miksi ProSportsTips?</h2>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-            <div className="text-center space-y-3">
-              <div className="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center mx-auto">
-                <TrendingUp className="w-8 h-8 text-primary" />
+          <h2 className="font-heading text-4xl font-bold text-center mb-4 gradient-text">Miksi JPTips?</h2>
+          <p className="text-center text-muted-foreground mb-16 text-lg">Ammattimaisia analyysejä joka päivä</p>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-10">
+            <div className="text-center space-y-4 p-6 rounded-lg border border-primary/20 hover:border-primary/40 transition-colors">
+              <div className="w-20 h-20 bg-gradient-to-br from-primary/20 to-accent/20 rounded-full flex items-center justify-center mx-auto border border-primary/30">
+                <TrendingUp className="w-10 h-10 text-primary" />
               </div>
               <h3 className="font-heading text-xl font-bold">AI-analyysit</h3>
-              <p className="text-muted-foreground">GPT-5.2 -pohjainen syväanalyysi joka otteluun</p>
+              <p className="text-muted-foreground">GPT-5.2 -pohjainen syväanalyysi joka otteluun todennäköisyyslaskelmilla</p>
             </div>
-            <div className="text-center space-y-3">
-              <div className="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center mx-auto">
-                <BarChart3 className="w-8 h-8 text-primary" />
+            <div className="text-center space-y-4 p-6 rounded-lg border border-primary/20 hover:border-primary/40 transition-colors">
+              <div className="w-20 h-20 bg-gradient-to-br from-secondary/20 to-primary/20 rounded-full flex items-center justify-center mx-auto border border-secondary/30">
+                <BarChart3 className="w-10 h-10 text-secondary" />
               </div>
               <h3 className="font-heading text-xl font-bold">Tilastot</h3>
-              <p className="text-muted-foreground">Kattavat tilastot ja joukkueiden muoto-analyysi</p>
+              <p className="text-muted-foreground">Kattavat tilastot, joukkueiden muoto ja head-to-head vertailut</p>
             </div>
-            <div className="text-center space-y-3">
-              <div className="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center mx-auto">
-                <Trophy className="w-8 h-8 text-primary" />
+            <div className="text-center space-y-4 p-6 rounded-lg border border-primary/20 hover:border-primary/40 transition-colors">
+              <div className="w-20 h-20 bg-gradient-to-br from-accent/20 to-secondary/20 rounded-full flex items-center justify-center mx-auto border border-accent/30">
+                <Trophy className="w-10 h-10 text-accent" />
               </div>
               <h3 className="font-heading text-xl font-bold">Vedonlyöntivinkit</h3>
-              <p className="text-muted-foreground">Konkreettiset vinkit ja perustelut vedonlyöntiin</p>
+              <p className="text-muted-foreground">Konkreettiset vinkit ja perustelut vedonlyöntiin asiantuntijoilta</p>
             </div>
           </div>
         </div>
