@@ -57,6 +57,7 @@ class UserProfile(BaseModel):
     username: str
     subscription_tier: str
     free_analyses_used: int
+    is_admin: bool
     created_at: str
 
 class Match(BaseModel):
