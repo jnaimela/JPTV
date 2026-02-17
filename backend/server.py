@@ -218,6 +218,10 @@ async def unlock_analysis(match_id: str, authorization: Optional[str] = Header(N
     user_data = await get_current_user(authorization)
     user = await db.users.find_one({"id": user_data["user_id"]}, {"_id": 0})
     
+    # Admin has unlimited access
+    if user.get("is_admin", False):
+        return {"success": True, "message": "Admin access granted"}
+    
     if user["subscription_tier"] != "free":
         return {"success": True, "message": "Analysis unlocked"}
     
