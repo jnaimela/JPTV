@@ -1,0 +1,70 @@
+{
+  "timestamp": "2026-02-17T18:32:37.889010",
+  "summary": {
+    "passed": 12,
+    "total": 12,
+    "success_rate": "100.0%"
+  },
+  "results": [
+    {
+      "test": "User Registration",
+      "status": "PASS",
+      "status_code": 200
+    },
+    {
+      "test": "Seed Data",
+      "status": "PASS",
+      "status_code": 200
+    },
+    {
+      "test": "Get All Matches",
+      "status": "PASS",
+      "status_code": 200
+    },
+    {
+      "test": "Get Football Matches",
+      "status": "PASS",
+      "status_code": 200
+    },
+    {
+      "test": "Get Match by ID",
+      "status": "PASS",
+      "status_code": 200
+    },
+    {
+      "test": "Generate Analysis",
+      "status": "PASS",
+      "status_code": 200
+    },
+    {
+      "test": "Get Analysis Preview",
+      "status": "PASS",
+      "status_code": 200
+    },
+    {
+      "test": "Get Analysis with Auth",
+      "status": "PASS",
+      "status_code": 200
+    },
+    {
+      "test": "Unlock Free Analysis",
+      "status": "PASS",
+      "status_code": 200
+    },
+    {
+      "test": "Get User Profile",
+      "status": "PASS",
+      "status_code": 200
+    },
+    {
+      "test": "Create Checkout Session",
+      "status": "PASS",
+      "status_code": 200
+    },
+    {
+      "test": "Get Payment Status",
+      "status": "PASS",
+      "status_code": 200
+    }
+  ]
+}
