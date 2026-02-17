@@ -7,11 +7,8 @@ import { toast } from 'sonner';
 
 // Pages
 import HomePage from './pages/HomePage';
-import LiveBetsPage from './pages/LiveBetsPage';
-import BetSlipPage from './pages/BetSlipPage';
-import ProfilePage from './pages/ProfilePage';
 import AnalysisPage from './pages/AnalysisPage';
-import StatisticsPage from './pages/StatisticsPage';
+import ProfilePage from './pages/ProfilePage';
 import PricingPage from './pages/PricingPage';
 import PaymentSuccessPage from './pages/PaymentSuccessPage';
 
@@ -27,7 +24,6 @@ function App() {
 
   useEffect(() => {
     if (token) {
-      // Verify token and get user
       axios.get(`${API}/user/profile`, {
         headers: { Authorization: `Bearer ${token}` }
       })
@@ -80,6 +76,19 @@ function App() {
     toast.success('Kirjauduttu ulos');
   };
 
+  const refreshUser = async () => {
+    if (token) {
+      try {
+        const res = await axios.get(`${API}/user/profile`, {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+        setUser(res.data);
+      } catch (error) {
+        console.error('Failed to refresh user:', error);
+      }
+    }
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
@@ -89,16 +98,13 @@ function App() {
   }
 
   return (
-    <AuthContext.Provider value={{ user, token, login, register, logout }}>
+    <AuthContext.Provider value={{ user, token, login, register, logout, refreshUser }}>
       <div className="App">
         <BrowserRouter>
           <Routes>
             <Route path="/" element={<HomePage />} />
-            <Route path="/live" element={<LiveBetsPage />} />
-            <Route path="/bet-slip" element={<BetSlipPage />} />
+            <Route path="/analysis/:matchId" element={<AnalysisPage />} />
             <Route path="/profile" element={user ? <ProfilePage /> : <Navigate to="/" />} />
-            <Route path="/analysis" element={<AnalysisPage />} />
-            <Route path="/statistics" element={<StatisticsPage />} />
             <Route path="/pricing" element={<PricingPage />} />
             <Route path="/payment-success" element={<PaymentSuccessPage />} />
           </Routes>
