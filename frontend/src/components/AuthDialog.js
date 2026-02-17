@@ -25,9 +25,9 @@ export const AuthDialog = ({ open, onClose }) => {
 
   return (
     <Dialog open={open} onOpenChange={onClose}>
-      <DialogContent className="glassmorphism border-primary/20" data-testid="auth-dialog">
+      <DialogContent className="bg-card border-primary/30" data-testid="auth-dialog">
         <DialogHeader>
-          <DialogTitle className="font-heading text-3xl text-primary">Tervetuloa</DialogTitle>
+          <DialogTitle className="font-heading text-3xl gradient-text">Tervetuloa</DialogTitle>
         </DialogHeader>
         <Tabs defaultValue="login" className="mt-4">
           <TabsList className="grid w-full grid-cols-2" data-testid="auth-tabs">
@@ -60,7 +60,7 @@ export const AuthDialog = ({ open, onClose }) => {
                   required
                 />
               </div>
-              <Button type="submit" className="w-full neon-glow" data-testid="login-submit-button">
+              <Button type="submit" className="w-full gradient-button font-semibold" data-testid="login-submit-button">
                 KIRJAUDU SISÄÄN
               </Button>
             </form>
@@ -103,7 +103,7 @@ export const AuthDialog = ({ open, onClose }) => {
                   required
                 />
               </div>
-              <Button type="submit" className="w-full neon-glow" data-testid="register-submit-button">
+              <Button type="submit" className="w-full gradient-button font-semibold" data-testid="register-submit-button">
                 REKISTERÖIDY
               </Button>
             </form>
