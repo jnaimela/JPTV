@@ -24,6 +24,7 @@ export default function HomePage() {
   useEffect(() => {
     seedData();
     loadMatches();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedSport]);
 
   const seedData = async () => {
