@@ -1,0 +1,119 @@
+import React, { useEffect, useState, useContext } from 'react';
+import { useNavigate, useSearchParams } from 'react-router-dom';
+import axios from 'axios';
+import { Navigation } from '../components/Navigation';
+import { AuthContext } from '../App';
+import { Card } from '../components/ui/card';
+import { Button } from '../components/ui/button';
+import { CheckCircle2, Loader2 } from 'lucide-react';
+
+const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
+const API = `${BACKEND_URL}/api`;
+
+export default function PaymentSuccessPage() {
+  const [searchParams] = useSearchParams();
+  const sessionId = searchParams.get('session_id');
+  const [status, setStatus] = useState('loading');
+  const [attempts, setAttempts] = useState(0);
+  const navigate = useNavigate();
+  const { user } = useContext(AuthContext);
+
+  useEffect(() => {
+    if (sessionId) {
+      checkPaymentStatus();
+    }
+  }, [sessionId, attempts]);
+
+  const checkPaymentStatus = async () => {
+    if (attempts >= 5) {
+      setStatus('timeout');
+      return;
+    }
+
+    try {
+      const res = await axios.get(
+        `${API}/payments/status/${sessionId}`,
+        { headers: { Authorization: `Bearer ${localStorage.getItem('token')}` } }
+      );
+
+      if (res.data.payment_status === 'paid') {
+        setStatus('success');
+        // Reload user data
+        window.location.reload();
+      } else if (res.data.status === 'expired') {
+        setStatus('error');
+      } else {
+        setTimeout(() => setAttempts(attempts + 1), 2000);
+      }
+    } catch (error) {
+      console.error('Error checking payment status:', error);
+      setStatus('error');
+    }
+  };
+
+  return (
+    <div className="min-h-screen" data-testid="payment-success-page">
+      <Navigation />
+
+      <div className="max-w-2xl mx-auto px-4 sm:px-6 lg:px-8 py-24">
+        {status === 'loading' && (
+          <Card className="glassmorphism p-12 text-center" data-testid="payment-loading">
+            <Loader2 className="w-16 h-16 text-primary mx-auto mb-6 animate-spin" />
+            <h1 className="font-heading text-3xl font-bold mb-4">Tarkistetaan maksua...</h1>
+            <p className="text-muted-foreground">
+              Odota hetki, käsittelemme maksusi.
+            </p>
+          </Card>
+        )}
+
+        {status === 'success' && (
+          <Card className="glassmorphism p-12 text-center border-success/30" data-testid="payment-success">
+            <CheckCircle2 className="w-16 h-16 text-success mx-auto mb-6" />
+            <h1 className="font-heading text-4xl font-black mb-4 text-success">
+              MAKSU ONNISTUI!
+            </h1>
+            <p className="text-lg text-muted-foreground mb-8">
+              Kiitos tilauksestasi! Premium-ominaisuudet ovat nyt käytettävissäsi.
+            </p>
+            <div className="flex gap-4 justify-center">
+              <Button onClick={() => navigate('/analysis')} className="neon-glow" data-testid="go-to-analysis-button">
+                Kokeile AI-analyysejä
+              </Button>
+              <Button onClick={() => navigate('/profile')} variant="outline" data-testid="go-to-profile-button">
+                Profiiliin
+              </Button>
+            </div>
+          </Card>
+        )}
+
+        {status === 'error' && (
+          <Card className="glassmorphism p-12 text-center border-error/30" data-testid="payment-error">
+            <h1 className="font-heading text-3xl font-bold mb-4 text-error">
+              Maksun käsittely epäonnistui
+            </h1>
+            <p className="text-muted-foreground mb-8">
+              Jotain meni pieleen. Yritä uudelleen tai ota yhteyttä tukeen.
+            </p>
+            <Button onClick={() => navigate('/pricing')} data-testid="retry-payment-button">
+              Takaisin hinnoitteluun
+            </Button>
+          </Card>
+        )}
+
+        {status === 'timeout' && (
+          <Card className="glassmorphism p-12 text-center border-warning/30" data-testid="payment-timeout">
+            <h1 className="font-heading text-3xl font-bold mb-4 text-warning">
+              Maksun tarkistus aikakatkaistiin
+            </h1>
+            <p className="text-muted-foreground mb-8">
+              Maksun käsittely voi kestää hetken. Tarkista sähköpostisi vahvistusta varten.
+            </p>
+            <Button onClick={() => navigate('/profile')} data-testid="check-profile-button">
+              Tarkista profiili
+            </Button>
+          </Card>
+        )}
+      </div>
+    </div>
+  );
+}
