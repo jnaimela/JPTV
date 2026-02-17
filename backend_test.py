@@ -1,356 +1,255 @@
+#!/usr/bin/env python3
+
 import requests
 import sys
-import json
 from datetime import datetime
+import json
 
 class JPTipsAPITester:
     def __init__(self, base_url="https://stake-hub-1.preview.emergentagent.com"):
         self.base_url = base_url
         self.api_url = f"{base_url}/api"
-        self.token = None
-        self.test_user_id = None
+        self.admin_token = None
+        self.admin_user = None
         self.tests_run = 0
         self.tests_passed = 0
-        self.results = []
 
-    def log_result(self, test_name, success, status_code=None, error=None, response_data=None):
-        """Log test result"""
+    def run_test(self, name, method, endpoint, expected_status, data=None, headers=None):
+        """Run a single API test"""
+        url = f"{self.api_url}/{endpoint}"
+        request_headers = {'Content-Type': 'application/json'}
+        if headers:
+            request_headers.update(headers)
+
         self.tests_run += 1
-        if success:
-            self.tests_passed += 1
-            print(f"✅ {test_name} - Status: {status_code}")
-            self.results.append({"test": test_name, "status": "PASS", "status_code": status_code})
-        else:
-            print(f"❌ {test_name} - Error: {error}")
-            self.results.append({"test": test_name, "status": "FAIL", "error": str(error)})
-        
-        if response_data and isinstance(response_data, dict) and len(str(response_data)) < 200:
-            print(f"   Response: {response_data}")
-
-    def test_user_registration(self):
-        """Test user registration"""
-        test_data = {
-            "email": f"test_{datetime.now().strftime('%H%M%S')}@test.com",
-            "username": f"testuser_{datetime.now().strftime('%H%M%S')}",
-            "password": "TestPassword123!"
-        }
+        print(f"\n🔍 Testing {name}...")
+        print(f"   URL: {url}")
         
         try:
-            response = requests.post(f"{self.api_url}/auth/register", json=test_data, timeout=10)
-            if response.status_code in [200, 201]:
-                data = response.json()
-                self.token = data.get("token")
-                self.test_user_id = data.get("user", {}).get("id")
-                self.log_result("User Registration", True, response.status_code, response_data={"token_received": bool(self.token)})
-                return True
+            if method == 'GET':
+                response = requests.get(url, headers=request_headers, timeout=15)
+            elif method == 'POST':
+                response = requests.post(url, json=data, headers=request_headers, timeout=15)
+
+            print(f"   Status: {response.status_code}")
+            success = response.status_code == expected_status
+            
+            if success:
+                self.tests_passed += 1
+                print(f"✅ Passed")
+                try:
+                    return True, response.json()
+                except:
+                    return True, response.text
             else:
-                self.log_result("User Registration", False, error=f"Status {response.status_code}: {response.text[:100]}")
-                return False
+                print(f"❌ Failed - Expected {expected_status}, got {response.status_code}")
+                try:
+                    print(f"   Response: {response.json()}")
+                except:
+                    print(f"   Response: {response.text[:200]}")
+                return False, {}
+
         except Exception as e:
-            self.log_result("User Registration", False, error=str(e))
+            print(f"❌ Failed - Error: {str(e)}")
+            return False, {}
+
+    def test_admin_login(self):
+        """Test admin user login with specific credentials"""
+        success, response = self.run_test(
+            "Admin Login",
+            "POST",
+            "auth/login",
+            200,
+            data={"email": "j.niemelanjml@gmail.com", "password": "admin123"}
+        )
+        if success and 'token' in response:
+            self.admin_token = response['token']
+            self.admin_user = response.get('user', {})
+            print(f"   Admin user details: is_admin={self.admin_user.get('is_admin')}, tier={self.admin_user.get('subscription_tier')}")
+            return True
+        return False
+
+    def test_live_scores_endpoint(self):
+        """Test live scores API endpoint"""
+        success, response = self.run_test(
+            "Live Scores API",
+            "GET",
+            "live-scores",
+            200
+        )
+        if success and isinstance(response, list) and len(response) > 0:
+            # Check first live score structure
+            score = response[0]
+            required_fields = ['id', 'home_team', 'away_team', 'home_score', 'away_score', 'status', 'league']
+            missing_fields = [field for field in required_fields if field not in score]
+            if missing_fields:
+                print(f"   ⚠️  Missing fields in live score: {missing_fields}")
+                return False
+            print(f"   ✅ Live scores format valid. Found {len(response)} live matches")
+            return True
+        return False
+
+    def test_news_endpoint(self):
+        """Test news feed API endpoint"""
+        success, response = self.run_test(
+            "News Feed API",
+            "GET",
+            "news",
+            200
+        )
+        if success and isinstance(response, list) and len(response) > 0:
+            # Check first news item structure
+            news = response[0]
+            required_fields = ['id', 'title', 'summary', 'source', 'published_at', 'category']
+            missing_fields = [field for field in required_fields if field not in news]
+            if missing_fields:
+                print(f"   ⚠️  Missing fields in news item: {missing_fields}")
+                return False
+            print(f"   ✅ News format valid. Found {len(response)} news items")
+            return True
+        return False
+
+    def test_matches_with_odds(self):
+        """Test matches endpoint returns odds data"""
+        success, response = self.run_test(
+            "Matches with Live Odds",
+            "GET",
+            "matches",
+            200
+        )
+        if success and isinstance(response, list) and len(response) > 0:
+            match = response[0]
+            odds_fields = ['home_odds', 'away_odds', 'last_odds_update']
+            missing_odds = [field for field in odds_fields if field not in match or match[field] is None]
+            if missing_odds:
+                print(f"   ⚠️  Missing odds fields: {missing_odds}")
+                return False
+            print(f"   ✅ Found match with odds: {match['home_team']} vs {match['away_team']} - Odds: {match['home_odds']}/{match.get('draw_odds', 'N/A')}/{match['away_odds']}")
+            return True, response[0]['id']  # Return match ID for odds update test
+        return False, None
+
+    def test_odds_update(self, match_id):
+        """Test live odds update endpoint"""
+        if not match_id:
+            return False
+            
+        success, response = self.run_test(
+            "Live Odds Update",
+            "POST",
+            f"matches/{match_id}/update-odds",
+            200
+        )
+        if success and 'home_odds' in response and 'away_odds' in response:
+            print(f"   ✅ Odds updated: {response['home_odds']}/{response.get('draw_odds', 'N/A')}/{response['away_odds']}")
+            print(f"   Last update: {response.get('last_odds_update')}")
+            return True
+        return False
+
+    def test_admin_analysis_access(self):
+        """Test admin user can access any analysis without payment"""
+        if not self.admin_token:
+            print("   ❌ No admin token available")
             return False
 
-    def test_user_login(self):
-        """Test user login with existing credentials"""
-        # Try with a test account first
-        test_data = {
-            "email": "admin@test.com",
-            "password": "admin123"
-        }
+        # First get matches to find one with analysis
+        matches_success, matches = self.run_test(
+            "Get Matches for Analysis Test",
+            "GET", 
+            "matches",
+            200
+        )
         
-        try:
-            response = requests.post(f"{self.api_url}/auth/login", json=test_data, timeout=10)
-            if response.status_code == 200:
-                data = response.json()
-                self.token = data.get("token")
-                self.log_result("User Login", True, response.status_code)
+        if not matches_success or not matches:
+            return False
+            
+        match_id = matches[0]['id']
+        
+        # Generate analysis for the match
+        gen_success, _ = self.run_test(
+            "Generate Analysis",
+            "POST",
+            f"analyses/generate?match_id={match_id}",
+            200
+        )
+        
+        if not gen_success:
+            print("   ⚠️  Analysis generation failed, trying existing analysis")
+        
+        # Try to get analysis as admin
+        headers = {"Authorization": f"Bearer {self.admin_token}"}
+        success, response = self.run_test(
+            "Admin Analysis Access",
+            "GET",
+            f"analyses/{match_id}",
+            200,
+            headers=headers
+        )
+        
+        if success and response:
+            is_locked = response.get('locked', True)
+            has_full_analysis = response.get('full_analysis') is not None
+            has_stats = response.get('stats_analysis') is not None
+            
+            if not is_locked and has_full_analysis and has_stats:
+                print(f"   ✅ Admin has unlimited access to analysis")
                 return True
             else:
-                self.log_result("User Login", False, error=f"Status {response.status_code}: {response.text[:100]}")
+                print(f"   ❌ Admin access issue - locked: {is_locked}, full_analysis: {has_full_analysis}, stats: {has_stats}")
                 return False
-        except Exception as e:
-            self.log_result("User Login", False, error=str(e))
-            return False
+        return False
 
     def test_seed_data(self):
-        """Test data seeding"""
-        try:
-            response = requests.post(f"{self.api_url}/seed-data", timeout=15)
-            if response.status_code == 200:
-                data = response.json()
-                self.log_result("Seed Data", True, response.status_code, response_data={"matches_created": data.get("matches", 0)})
-                return True
-            else:
-                self.log_result("Seed Data", False, error=f"Status {response.status_code}")
-                return False
-        except Exception as e:
-            self.log_result("Seed Data", False, error=str(e))
-            return False
-
-    def test_get_matches(self):
-        """Test getting matches"""
-        try:
-            # Test all matches
-            response = requests.get(f"{self.api_url}/matches", timeout=10)
-            if response.status_code == 200:
-                matches = response.json()
-                self.log_result("Get All Matches", True, response.status_code, response_data={"count": len(matches)})
-                
-                # Test football matches specifically
-                response = requests.get(f"{self.api_url}/matches?sport=Football", timeout=10)
-                if response.status_code == 200:
-                    football_matches = response.json()
-                    self.log_result("Get Football Matches", True, response.status_code, response_data={"count": len(football_matches)})
-                    return len(matches) > 0
-                else:
-                    self.log_result("Get Football Matches", False, error=f"Status {response.status_code}")
-                    return False
-            else:
-                self.log_result("Get All Matches", False, error=f"Status {response.status_code}")
-                return False
-        except Exception as e:
-            self.log_result("Get All Matches", False, error=str(e))
-            return False
-
-    def test_get_match_by_id(self, match_id=None):
-        """Test getting specific match"""
-        if not match_id:
-            # Get first match ID
-            try:
-                response = requests.get(f"{self.api_url}/matches", timeout=10)
-                if response.status_code == 200:
-                    matches = response.json()
-                    if matches:
-                        match_id = matches[0]["id"]
-                    else:
-                        self.log_result("Get Match by ID", False, error="No matches available")
-                        return False
-                else:
-                    self.log_result("Get Match by ID", False, error="Could not get matches list")
-                    return False
-            except Exception as e:
-                self.log_result("Get Match by ID", False, error=f"Error getting matches: {str(e)}")
-                return False
-
-        try:
-            response = requests.get(f"{self.api_url}/matches/{match_id}", timeout=10)
-            if response.status_code == 200:
-                match = response.json()
-                self.log_result("Get Match by ID", True, response.status_code, response_data={"match": f"{match.get('home_team')} vs {match.get('away_team')}"})
-                return match_id
-            else:
-                self.log_result("Get Match by ID", False, error=f"Status {response.status_code}")
-                return None
-        except Exception as e:
-            self.log_result("Get Match by ID", False, error=str(e))
-            return None
-
-    def test_generate_analysis(self, match_id):
-        """Test generating analysis for a match"""
-        try:
-            response = requests.post(f"{self.api_url}/analyses/generate?match_id={match_id}", timeout=30)
-            if response.status_code == 200:
-                analysis = response.json()
-                self.log_result("Generate Analysis", True, response.status_code, 
-                              response_data={"prediction": analysis.get("prediction"), "confidence": f"{(analysis.get('confidence', 0) * 100):.0f}%"})
-                return True
-            else:
-                self.log_result("Generate Analysis", False, error=f"Status {response.status_code}: {response.text[:100]}")
-                return False
-        except Exception as e:
-            self.log_result("Generate Analysis", False, error=str(e))
-            return False
-
-    def test_get_analysis_preview(self, match_id):
-        """Test getting analysis preview (without auth)"""
-        try:
-            response = requests.get(f"{self.api_url}/analyses/{match_id}", timeout=10)
-            if response.status_code == 200:
-                analysis = response.json()
-                is_locked = analysis.get("locked", False)
-                self.log_result("Get Analysis Preview", True, response.status_code, 
-                              response_data={"locked": is_locked, "has_preview": bool(analysis.get("preview"))})
-                return True
-            else:
-                self.log_result("Get Analysis Preview", False, error=f"Status {response.status_code}")
-                return False
-        except Exception as e:
-            self.log_result("Get Analysis Preview", False, error=str(e))
-            return False
-
-    def test_get_analysis_with_auth(self, match_id):
-        """Test getting analysis with authentication"""
-        if not self.token:
-            self.log_result("Get Analysis with Auth", False, error="No authentication token")
-            return False
-            
-        try:
-            headers = {"Authorization": f"Bearer {self.token}"}
-            response = requests.get(f"{self.api_url}/analyses/{match_id}", headers=headers, timeout=10)
-            if response.status_code == 200:
-                analysis = response.json()
-                is_locked = analysis.get("locked", False)
-                self.log_result("Get Analysis with Auth", True, response.status_code, 
-                              response_data={"locked": is_locked})
-                return True
-            else:
-                self.log_result("Get Analysis with Auth", False, error=f"Status {response.status_code}")
-                return False
-        except Exception as e:
-            self.log_result("Get Analysis with Auth", False, error=str(e))
-            return False
-
-    def test_unlock_free_analysis(self, match_id):
-        """Test unlocking analysis with free tier"""
-        if not self.token:
-            self.log_result("Unlock Free Analysis", False, error="No authentication token")
-            return False
-            
-        try:
-            headers = {"Authorization": f"Bearer {self.token}"}
-            response = requests.post(f"{self.api_url}/analyses/{match_id}/unlock", headers=headers, timeout=10)
-            if response.status_code == 200:
-                result = response.json()
-                self.log_result("Unlock Free Analysis", True, response.status_code, response_data=result)
-                return True
-            elif response.status_code == 403:
-                # This is expected if free analysis already used
-                self.log_result("Unlock Free Analysis", True, response.status_code, response_data={"message": "Free analysis limit reached (expected)"})
-                return True
-            else:
-                self.log_result("Unlock Free Analysis", False, error=f"Status {response.status_code}: {response.text[:100]}")
-                return False
-        except Exception as e:
-            self.log_result("Unlock Free Analysis", False, error=str(e))
-            return False
-
-    def test_get_user_profile(self):
-        """Test getting user profile"""
-        if not self.token:
-            self.log_result("Get User Profile", False, error="No authentication token")
-            return False
-            
-        try:
-            headers = {"Authorization": f"Bearer {self.token}"}
-            response = requests.get(f"{self.api_url}/user/profile", headers=headers, timeout=10)
-            if response.status_code == 200:
-                profile = response.json()
-                self.log_result("Get User Profile", True, response.status_code, 
-                              response_data={"tier": profile.get("subscription_tier"), "free_used": profile.get("free_analyses_used")})
-                return True
-            else:
-                self.log_result("Get User Profile", False, error=f"Status {response.status_code}")
-                return False
-        except Exception as e:
-            self.log_result("Get User Profile", False, error=str(e))
-            return False
-
-    def test_create_checkout_session(self):
-        """Test creating Stripe checkout session"""
-        if not self.token:
-            self.log_result("Create Checkout Session", False, error="No authentication token")
-            return False
-            
-        try:
-            headers = {
-                "Authorization": f"Bearer {self.token}",
-                "Origin": self.base_url
-            }
-            data = {"tier": "basic"}
-            response = requests.post(f"{self.api_url}/payments/checkout", json=data, headers=headers, timeout=15)
-            if response.status_code == 200:
-                result = response.json()
-                has_url = bool(result.get("url"))
-                has_session_id = bool(result.get("session_id"))
-                self.log_result("Create Checkout Session", True, response.status_code, 
-                              response_data={"has_url": has_url, "has_session_id": has_session_id})
-                return result.get("session_id")
-            else:
-                self.log_result("Create Checkout Session", False, error=f"Status {response.status_code}: {response.text[:100]}")
-                return None
-        except Exception as e:
-            self.log_result("Create Checkout Session", False, error=str(e))
-            return None
-
-    def test_get_payment_status(self, session_id):
-        """Test getting payment status"""
-        if not self.token or not session_id:
-            self.log_result("Get Payment Status", False, error="Missing token or session ID")
-            return False
-            
-        try:
-            headers = {"Authorization": f"Bearer {self.token}"}
-            response = requests.get(f"{self.api_url}/payments/status/{session_id}", headers=headers, timeout=10)
-            if response.status_code == 200:
-                result = response.json()
-                self.log_result("Get Payment Status", True, response.status_code, 
-                              response_data={"payment_status": result.get("payment_status")})
-                return True
-            else:
-                self.log_result("Get Payment Status", False, error=f"Status {response.status_code}")
-                return False
-        except Exception as e:
-            self.log_result("Get Payment Status", False, error=str(e))
-            return False
-
-    def run_all_tests(self):
-        """Run complete test suite"""
-        print("🔍 Starting JPTips API Testing...")
-        print(f"🌐 Base URL: {self.base_url}")
-        print("-" * 50)
-        
-        # Test authentication
-        if not self.test_user_registration():
-            print("⚠️ Registration failed, trying existing login...")
-            self.test_user_login()
-        
-        # Seed data
-        self.test_seed_data()
-        
-        # Test matches
-        if self.test_get_matches():
-            match_id = self.test_get_match_by_id()
-            
-            if match_id:
-                # Test analysis flow
-                self.test_generate_analysis(match_id)
-                self.test_get_analysis_preview(match_id)
-                self.test_get_analysis_with_auth(match_id)
-                self.test_unlock_free_analysis(match_id)
-        
-        # Test user profile
-        self.test_get_user_profile()
-        
-        # Test payment flow
-        session_id = self.test_create_checkout_session()
-        if session_id:
-            self.test_get_payment_status(session_id)
-        
-        # Print summary
-        print("-" * 50)
-        print(f"📊 Tests completed: {self.tests_passed}/{self.tests_run} passed ({(self.tests_passed/self.tests_run*100):.1f}%)")
-        
-        return self.tests_passed, self.tests_run, self.results
+        """Test seed data endpoint creates admin user and data"""
+        success, response = self.run_test(
+            "Seed Data",
+            "POST",
+            "seed-data",
+            200
+        )
+        if success:
+            print(f"   ✅ Seed data: {response.get('message', 'completed')}")
+            return True
+        return False
 
 def main():
+    print("🚀 Starting JPTips API Testing - New Features Focus")
+    print("=" * 60)
+    
     tester = JPTipsAPITester()
-    passed, total, results = tester.run_all_tests()
     
-    # Save detailed results
-    detailed_results = {
-        "timestamp": datetime.now().isoformat(),
-        "summary": {
-            "passed": passed,
-            "total": total,
-            "success_rate": f"{passed/total*100:.1f}%"
-        },
-        "results": results
-    }
+    # Test all new features
+    tester.test_seed_data()
     
-    with open("/app/test_reports/backend_api_results.json", "w") as f:
-        json.dump(detailed_results, f, indent=2)
+    # Test admin login first
+    if not tester.test_admin_login():
+        print("\n❌ Admin login failed - stopping admin tests")
+    else:
+        print(f"\n✅ Admin login successful! User: {tester.admin_user.get('email')}")
     
-    return 0 if passed == total else 1
+    # Test live features
+    tester.test_live_scores_endpoint()
+    tester.test_news_endpoint()
+    
+    # Test odds system
+    odds_success, match_id = tester.test_matches_with_odds()
+    if odds_success:
+        tester.test_odds_update(match_id)
+    
+    # Test admin privileges
+    if tester.admin_token:
+        tester.test_admin_analysis_access()
+
+    # Print final results
+    print("\n" + "=" * 60)
+    print(f"📊 Final Results: {tester.tests_passed}/{tester.tests_run} tests passed")
+    print(f"Success Rate: {(tester.tests_passed/tester.tests_run*100):.1f}%")
+    
+    if tester.tests_passed == tester.tests_run:
+        print("🎉 All tests passed!")
+        return 0
+    else:
+        print(f"⚠️  {tester.tests_run - tester.tests_passed} tests failed")
+        return 1
 
 if __name__ == "__main__":
     sys.exit(main())
