@@ -3,6 +3,8 @@ import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { Navigation } from '../components/Navigation';
 import { AuthDialog } from '../components/AuthDialog';
+import { LiveScores } from '../components/LiveScores';
+import { NewsFeed } from '../components/NewsFeed';
 import { AuthContext } from '../App';
 import { Button } from '../components/ui/button';
 import { Card } from '../components/ui/card';
