@@ -18,7 +18,6 @@ from emergentintegrations.payments.stripe.checkout import StripeCheckout, Checko
 ROOT_DIR = Path(__file__).parent
 load_dotenv(ROOT_DIR / '.env')
 
-# MongoDB connection
 mongo_url = os.environ['MONGO_URL']
 client = AsyncIOMotorClient(mongo_url)
 db = client[os.environ['DB_NAME']]
@@ -37,7 +36,8 @@ class User(BaseModel):
     email: str
     username: str
     password_hash: str
-    is_premium: bool = False
+    subscription_tier: str = "free"  # free, basic, pro, premium
+    free_analyses_used: int = 0
     created_at: str = Field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
 
 class UserCreate(BaseModel):
@@ -54,7 +54,8 @@ class UserProfile(BaseModel):
     id: str
     email: str
     username: str
-    is_premium: bool
+    subscription_tier: str
+    free_analyses_used: int
     created_at: str
 
 class Match(BaseModel):
@@ -63,74 +64,24 @@ class Match(BaseModel):
     home_team: str
     away_team: str
     sport: str
+    league: str
     start_time: str
-    status: str  # upcoming, live, finished
-    home_odds: float
-    away_odds: float
-    draw_odds: Optional[float] = None
-    home_score: Optional[int] = None
-    away_score: Optional[int] = None
+    status: str
+    home_form: Optional[str] = None
+    away_form: Optional[str] = None
     created_at: str = Field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
 
-class MatchCreate(BaseModel):
-    home_team: str
-    away_team: str
-    sport: str
-    start_time: str
-    home_odds: float
-    away_odds: float
-    draw_odds: Optional[float] = None
-
-class Bet(BaseModel):
-    model_config = ConfigDict(extra="ignore")
-    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
-    user_id: str
-    match_id: str
-    bet_type: str  # home, away, draw
-    odds: float
-    amount: float
-    status: str  # pending, won, lost
-    created_at: str = Field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
-
-class BetCreate(BaseModel):
-    match_id: str
-    bet_type: str
-    odds: float
-    amount: float
-
-class BetSlip(BaseModel):
-    model_config = ConfigDict(extra="ignore")
-    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
-    user_id: str
-    bets: List[Dict[str, Any]]
-    total_odds: float
-    total_amount: float
-    status: str  # pending, won, lost
-    created_at: str = Field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
-
-class BetSlipCreate(BaseModel):
-    bets: List[Dict[str, Any]]
-    total_amount: float
-
-class Statistic(BaseModel):
-    model_config = ConfigDict(extra="ignore")
-    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
-    team: str
-    sport: str
-    year: int
-    wins: int
-    losses: int
-    draws: int
-    goals_scored: Optional[int] = None
-    goals_conceded: Optional[int] = None
-
-class AIPrediction(BaseModel):
+class Analysis(BaseModel):
     model_config = ConfigDict(extra="ignore")
     id: str = Field(default_factory=lambda: str(uuid.uuid4()))
     match_id: str
     prediction: str
     confidence: float
-    analysis: str
+    key_factors: List[str]
+    stats_analysis: str
+    betting_tips: List[str]
+    full_analysis: str
+    preview: str
     created_at: str = Field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
 
 class PaymentTransaction(BaseModel):
@@ -140,12 +91,13 @@ class PaymentTransaction(BaseModel):
     session_id: str
     amount: float
     currency: str
+    tier: str
     payment_status: str
     status: str
     created_at: str = Field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
 
 class CheckoutRequest(BaseModel):
-    package_id: str
+    tier: str
 
 # Helper functions
 def create_token(user_id: str, email: str) -> str:
@@ -202,22 +154,14 @@ async def login(credentials: UserLogin):
 
 # Match Routes
 @api_router.get("/matches")
-async def get_matches(status: Optional[str] = None):
+async def get_matches(sport: Optional[str] = None, league: Optional[str] = None):
     query = {}
-    if status:
-        query["status"] = status
-    matches = await db.matches.find(query, {"_id": 0}).to_list(100)
+    if sport:
+        query["sport"] = sport
+    if league:
+        query["league"] = league
+    matches = await db.matches.find(query, {"_id": 0}).sort("start_time", 1).to_list(100)
     return matches
-
-@api_router.post("/matches")
-async def create_match(match_data: MatchCreate):
-    match = Match(
-        **match_data.model_dump(),
-        status="upcoming"
-    )
-    doc = match.model_dump()
-    await db.matches.insert_one(doc)
-    return match
 
 @api_router.get("/matches/{match_id}")
 async def get_match(match_id: str):
@@ -226,149 +170,146 @@ async def get_match(match_id: str):
         raise HTTPException(status_code=404, detail="Match not found")
     return match
 
-# Bet Routes
-@api_router.post("/bets")
-async def create_bet(bet_data: BetCreate, authorization: Optional[str] = Header(None)):
-    user = await get_current_user(authorization)
-    
-    bet = Bet(
-        user_id=user["user_id"],
-        **bet_data.model_dump(),
-        status="pending"
-    )
-    doc = bet.model_dump()
-    await db.bets.insert_one(doc)
-    return bet
-
-@api_router.get("/bets")
-async def get_user_bets(authorization: Optional[str] = Header(None)):
-    user = await get_current_user(authorization)
-    bets = await db.bets.find({"user_id": user["user_id"]}, {"_id": 0}).to_list(100)
-    return bets
-
-# Bet Slip Routes
-@api_router.post("/bet-slips")
-async def create_bet_slip(slip_data: BetSlipCreate, authorization: Optional[str] = Header(None)):
-    user = await get_current_user(authorization)
-    
-    total_odds = 1.0
-    for bet in slip_data.bets:
-        total_odds *= bet["odds"]
-    
-    bet_slip = BetSlip(
-        user_id=user["user_id"],
-        bets=slip_data.bets,
-        total_odds=total_odds,
-        total_amount=slip_data.total_amount,
-        status="pending"
-    )
-    doc = bet_slip.model_dump()
-    await db.bet_slips.insert_one(doc)
-    return bet_slip
-
-@api_router.get("/bet-slips")
-async def get_user_bet_slips(authorization: Optional[str] = Header(None)):
-    user = await get_current_user(authorization)
-    slips = await db.bet_slips.find({"user_id": user["user_id"]}, {"_id": 0}).to_list(100)
-    return slips
-
-# Statistics Routes
-@api_router.get("/statistics")
-async def get_statistics(team: Optional[str] = None, sport: Optional[str] = None):
+# Analysis Routes
+@api_router.get("/analyses")
+async def get_analyses(sport: Optional[str] = None):
     query = {}
-    if team:
-        query["team"] = team
     if sport:
-        query["sport"] = sport
-    stats = await db.statistics.find(query, {"_id": 0}).to_list(100)
-    return stats
+        # Get matches for this sport
+        matches = await db.matches.find({"sport": sport}, {"id": 1, "_id": 0}).to_list(100)
+        match_ids = [m["id"] for m in matches]
+        query["match_id"] = {"$in": match_ids}
+    
+    analyses = await db.analyses.find(query, {"_id": 0}).sort("created_at", -1).to_list(50)
+    return analyses
 
-# AI Routes
-@api_router.post("/ai/generate-bet")
-async def generate_bet(match_id: str, authorization: Optional[str] = Header(None)):
-    user = await get_current_user(authorization)
-    user_doc = await db.users.find_one({"id": user["user_id"]}, {"_id": 0})
+@api_router.get("/analyses/{match_id}")
+async def get_analysis(match_id: str, authorization: Optional[str] = Header(None)):
+    analysis = await db.analyses.find_one({"match_id": match_id}, {"_id": 0})
+    if not analysis:
+        raise HTTPException(status_code=404, detail="Analysis not found")
     
-    if not user_doc.get("is_premium"):
-        raise HTTPException(status_code=403, detail="Premium subscription required")
+    # Check if user can access full analysis
+    can_access_full = False
+    if authorization and authorization.startswith("Bearer "):
+        try:
+            user_data = verify_token(authorization.split(" ")[1])
+            user = await db.users.find_one({"id": user_data["user_id"]}, {"_id": 0})
+            if user and user["subscription_tier"] != "free":
+                can_access_full = True
+        except:
+            pass
     
-    match = await db.matches.find_one({"id": match_id}, {"_id": 0})
-    if not match:
-        raise HTTPException(status_code=404, detail="Match not found")
+    if not can_access_full:
+        # Return only preview
+        return {
+            **analysis,
+            "stats_analysis": None,
+            "full_analysis": None,
+            "locked": True
+        }
     
-    # Get AI prediction
-    llm_key = os.getenv("EMERGENT_LLM_KEY")
-    chat = LlmChat(
-        api_key=llm_key,
-        session_id=f"bet_gen_{match_id}",
-        system_message="You are an expert sports betting analyst. Analyze matches and provide betting recommendations."
-    ).with_model("openai", "gpt-5.2")
+    return {**analysis, "locked": False}
+
+@api_router.post("/analyses/{match_id}/unlock")
+async def unlock_analysis(match_id: str, authorization: Optional[str] = Header(None)):
+    user_data = await get_current_user(authorization)
+    user = await db.users.find_one({"id": user_data["user_id"]}, {"_id": 0})
     
-    prompt = f"""Analyze this match and provide a betting recommendation:
-    Home Team: {match['home_team']} (Odds: {match['home_odds']})
-    Away Team: {match['away_team']} (Odds: {match['away_odds']})
-    Sport: {match['sport']}
+    if user["subscription_tier"] != "free":
+        return {"success": True, "message": "Analysis unlocked"}
     
-    Provide:
-    1. Your prediction (home/away/draw)
-    2. Confidence level (0-100%)
-    3. Brief analysis (2-3 sentences)
+    # Check if user has free analyses left
+    if user["free_analyses_used"] >= 1:
+        raise HTTPException(status_code=403, detail="Free analysis limit reached")
     
-    Format: PREDICTION|CONFIDENCE|ANALYSIS"""
-    
-    response = await chat.send_message(UserMessage(text=prompt))
-    parts = response.split("|")
-    
-    prediction = AIPrediction(
-        match_id=match_id,
-        prediction=parts[0].strip() if len(parts) > 0 else "home",
-        confidence=float(parts[1].strip().replace("%", "")) / 100 if len(parts) > 1 else 0.75,
-        analysis=parts[2].strip() if len(parts) > 2 else response
+    # Increment free analyses used
+    await db.users.update_one(
+        {"id": user_data["user_id"]},
+        {"$inc": {"free_analyses_used": 1}}
     )
     
-    doc = prediction.model_dump()
-    await db.predictions.insert_one(doc)
-    return prediction
+    return {"success": True, "message": "Free analysis used"}
 
-@api_router.post("/ai/analyze-match")
-async def analyze_match(match_id: str, authorization: Optional[str] = Header(None)):
-    user = await get_current_user(authorization)
-    user_doc = await db.users.find_one({"id": user["user_id"]}, {"_id": 0})
-    
-    if not user_doc.get("is_premium"):
-        raise HTTPException(status_code=403, detail="Premium subscription required")
-    
+@api_router.post("/analyses/generate")
+async def generate_analysis(match_id: str):
     match = await db.matches.find_one({"id": match_id}, {"_id": 0})
     if not match:
         raise HTTPException(status_code=404, detail="Match not found")
     
-    # Get team statistics
-    home_stats = await db.statistics.find({"team": match["home_team"]}, {"_id": 0}).to_list(5)
-    away_stats = await db.statistics.find({"team": match["away_team"]}, {"_id": 0}).to_list(5)
+    # Check if analysis already exists
+    existing = await db.analyses.find_one({"match_id": match_id}, {"_id": 0})
+    if existing:
+        return existing
     
+    # Generate AI analysis
     llm_key = os.getenv("EMERGENT_LLM_KEY")
     chat = LlmChat(
         api_key=llm_key,
         session_id=f"analysis_{match_id}",
-        system_message="You are an expert sports analyst providing detailed match analysis."
+        system_message="You are an expert sports analyst providing detailed match analysis and betting predictions."
     ).with_model("openai", "gpt-5.2")
     
-    prompt = f"""Provide detailed analysis for this match:
-    {match['home_team']} vs {match['away_team']}
-    Sport: {match['sport']}
-    Home Odds: {match['home_odds']}, Away Odds: {match['away_odds']}
+    prompt = f"""Analyze this match and provide a comprehensive prediction:
+
+Match: {match['home_team']} vs {match['away_team']}
+Sport: {match['sport']}
+League: {match['league']}
+Home Form: {match.get('home_form', 'Unknown')}
+Away Form: {match.get('away_form', 'Unknown')}
+
+Provide:
+1. Prediction (Home Win/Draw/Away Win)
+2. Confidence (0-100%)
+3. Key Factors (3-5 bullet points)
+4. Statistical Analysis (200 words)
+5. Betting Tips (3 specific tips with reasoning)
+6. Full Analysis (300 words covering tactics, form, h2h)
+
+Format as JSON:
+{{
+  "prediction": "Home Win",
+  "confidence": 75,
+  "key_factors": ["factor1", "factor2", "factor3"],
+  "stats_analysis": "...",
+  "betting_tips": ["tip1", "tip2", "tip3"],
+  "full_analysis": "..."
+}}"""
     
-    Home Team Stats: {home_stats}
-    Away Team Stats: {away_stats}
+    response = await chat.send_message(UserMessage(text=prompt))
     
-    Provide comprehensive analysis covering:
-    - Team form
-    - Head-to-head history
-    - Key factors
-    - Betting value assessment"""
+    try:
+        import json
+        data = json.loads(response)
+    except:
+        # Fallback if not JSON
+        data = {
+            "prediction": "Home Win",
+            "confidence": 70,
+            "key_factors": ["Home advantage", "Better form", "Strong attack"],
+            "stats_analysis": response[:200],
+            "betting_tips": ["Back home win", "Over 2.5 goals", "Both teams to score"],
+            "full_analysis": response
+        }
     
-    analysis = await chat.send_message(UserMessage(text=prompt))
-    return {"match_id": match_id, "analysis": analysis}
+    # Create preview (first 150 chars of full analysis)
+    preview = data["full_analysis"][:150] + "..."
+    
+    analysis = Analysis(
+        match_id=match_id,
+        prediction=data["prediction"],
+        confidence=float(data["confidence"]) / 100,
+        key_factors=data["key_factors"],
+        stats_analysis=data["stats_analysis"],
+        betting_tips=data["betting_tips"],
+        full_analysis=data["full_analysis"],
+        preview=preview
+    )
+    
+    doc = analysis.model_dump()
+    await db.analyses.insert_one(doc)
+    
+    return analysis
 
 # User Profile Routes
 @api_router.get("/user/profile")
@@ -379,23 +320,22 @@ async def get_profile(authorization: Optional[str] = Header(None)):
         raise HTTPException(status_code=404, detail="User not found")
     return UserProfile(**{k: v for k, v in user_doc.items() if k != "password_hash"})
 
-@api_router.get("/user/history")
-async def get_user_history(authorization: Optional[str] = Header(None)):
-    user = await get_current_user(authorization)
-    bets = await db.bets.find({"user_id": user["user_id"]}, {"_id": 0}).sort("created_at", -1).to_list(50)
-    return bets
-
 # Payment Routes
-PACKAGES = {"premium_monthly": 9.99, "premium_yearly": 99.99}
+SUBSCRIPTION_TIERS = {
+    "basic": {"price": 4.99, "name": "Basic"},
+    "pro": {"price": 9.99, "name": "Pro"},
+    "premium": {"price": 14.99, "name": "Premium"}
+}
 
 @api_router.post("/payments/checkout")
 async def create_checkout(checkout_req: CheckoutRequest, request: Request, authorization: Optional[str] = Header(None)):
     user = await get_current_user(authorization)
     
-    if checkout_req.package_id not in PACKAGES:
-        raise HTTPException(status_code=400, detail="Invalid package")
+    if checkout_req.tier not in SUBSCRIPTION_TIERS:
+        raise HTTPException(status_code=400, detail="Invalid tier")
     
-    amount = PACKAGES[checkout_req.package_id]
+    tier_info = SUBSCRIPTION_TIERS[checkout_req.tier]
+    amount = tier_info["price"]
     origin_url = request.headers.get("origin", str(request.base_url).rstrip("/"))
     
     success_url = f"{origin_url}/payment-success?session_id={{CHECKOUT_SESSION_ID}}"
@@ -410,17 +350,17 @@ async def create_checkout(checkout_req: CheckoutRequest, request: Request, autho
         currency="usd",
         success_url=success_url,
         cancel_url=cancel_url,
-        metadata={"user_id": user["user_id"], "package": checkout_req.package_id}
+        metadata={"user_id": user["user_id"], "tier": checkout_req.tier}
     )
     
     session: CheckoutSessionResponse = await stripe_checkout.create_checkout_session(checkout_request)
     
-    # Create payment transaction
     payment = PaymentTransaction(
         user_id=user["user_id"],
         session_id=session.session_id,
         amount=amount,
         currency="usd",
+        tier=checkout_req.tier,
         payment_status="pending",
         status="initiated"
     )
@@ -437,7 +377,6 @@ async def get_payment_status(session_id: str, authorization: Optional[str] = Hea
     
     status: CheckoutStatusResponse = await stripe_checkout.get_checkout_status(session_id)
     
-    # Update payment transaction
     existing = await db.payment_transactions.find_one({"session_id": session_id, "payment_status": {"$ne": "paid"}}, {"_id": 0})
     
     if existing and status.payment_status == "paid":
@@ -446,10 +385,9 @@ async def get_payment_status(session_id: str, authorization: Optional[str] = Hea
             {"$set": {"payment_status": status.payment_status, "status": "completed"}}
         )
         
-        # Update user to premium
         await db.users.update_one(
             {"id": existing["user_id"]},
-            {"$set": {"is_premium": True}}
+            {"$set": {"subscription_tier": existing["tier"]}}
         )
     
     return status.model_dump()
@@ -468,62 +406,65 @@ async def stripe_webhook(request: Request):
     except Exception as e:
         raise HTTPException(status_code=400, detail=str(e))
 
-# Seed data endpoint (for demo)
+# Seed data endpoint
 @api_router.post("/seed-data")
 async def seed_data():
-    # Clear existing data
     await db.matches.delete_many({})
-    await db.statistics.delete_many({})
+    await db.analyses.delete_many({})
     
-    # Seed matches
-    sports = ["Football", "Basketball", "Ice Hockey", "Tennis"]
-    teams = {
-        "Football": ["Liverpool", "Manchester United", "Barcelona", "Real Madrid", "Bayern Munich", "PSG"],
-        "Basketball": ["Lakers", "Celtics", "Warriors", "Heat", "Bucks", "Nets"],
-        "Ice Hockey": ["Penguins", "Capitals", "Maple Leafs", "Canadiens", "Bruins", "Rangers"],
-        "Tennis": ["Nadal", "Djokovic", "Federer", "Alcaraz", "Medvedev", "Tsitsipas"]
-    }
+    # Football matches - major leagues
+    football_matches = [
+        # Premier League
+        {"home_team": "Manchester City", "away_team": "Arsenal", "sport": "Football", "league": "Premier League", "home_form": "WWWDW", "away_form": "WDWWL"},
+        {"home_team": "Liverpool", "away_team": "Chelsea", "sport": "Football", "league": "Premier League", "home_form": "WWWWW", "away_form": "DWWLD"},
+        {"home_team": "Manchester United", "away_team": "Tottenham", "sport": "Football", "league": "Premier League", "home_form": "WDLWW", "away_form": "LWDWW"},
+        # La Liga
+        {"home_team": "Real Madrid", "away_team": "Barcelona", "sport": "Football", "league": "La Liga", "home_form": "WWWWL", "away_form": "WWWWW"},
+        {"home_team": "Atletico Madrid", "away_team": "Sevilla", "sport": "Football", "league": "La Liga", "home_form": "WDWWL", "away_form": "LDWWW"},
+        # Serie A
+        {"home_team": "Inter Milan", "away_team": "AC Milan", "sport": "Football", "league": "Serie A", "home_form": "WWDWW", "away_form": "WLWDW"},
+        {"home_team": "Juventus", "away_team": "Napoli", "sport": "Football", "league": "Serie A", "home_form": "DWWWL", "away_form": "WWWWW"},
+        # Bundesliga
+        {"home_team": "Bayern Munich", "away_team": "Borussia Dortmund", "sport": "Football", "league": "Bundesliga", "home_form": "WWWWW", "away_form": "WDWLW"},
+        # Champions League
+        {"home_team": "PSG", "away_team": "Real Madrid", "sport": "Football", "league": "Champions League", "home_form": "WWDWW", "away_form": "WWWWL"},
+    ]
+    
+    # Ice Hockey
+    hockey_matches = [
+        {"home_team": "Colorado Avalanche", "away_team": "Vegas Golden Knights", "sport": "Ice Hockey", "league": "NHL", "home_form": "WWLWW", "away_form": "WDWWL"},
+        {"home_team": "Boston Bruins", "away_team": "Toronto Maple Leafs", "sport": "Ice Hockey", "league": "NHL", "home_form": "WWWDL", "away_form": "LWWWW"},
+        {"home_team": "HIFK", "away_team": "Tappara", "sport": "Ice Hockey", "league": "Liiga", "home_form": "WLWWW", "away_form": "WWDLW"},
+        {"home_team": "Färjestad", "away_team": "Frölunda", "sport": "Ice Hockey", "league": "SHL", "home_form": "DWWWL", "away_form": "WLWWW"},
+    ]
+    
+    # Basketball
+    basketball_matches = [
+        {"home_team": "Lakers", "away_team": "Celtics", "sport": "Basketball", "league": "NBA", "home_form": "WWLWL", "away_form": "LWWWW"},
+        {"home_team": "Warriors", "away_team": "Bucks", "sport": "Basketball", "league": "NBA", "home_form": "WDWWW", "away_form": "WWLWW"},
+        {"home_team": "Real Madrid", "away_team": "Barcelona", "sport": "Basketball", "league": "Euroleague", "home_form": "WWWLW", "away_form": "WLWWW"},
+    ]
+    
+    # Tennis
+    tennis_matches = [
+        {"home_team": "Novak Djokovic", "away_team": "Carlos Alcaraz", "sport": "Tennis", "league": "Australian Open", "home_form": "WWW", "away_form": "WWW"},
+        {"home_team": "Jannik Sinner", "away_team": "Daniil Medvedev", "sport": "Tennis", "league": "Australian Open", "home_form": "WLW", "away_form": "WWL"},
+    ]
+    
+    all_matches = football_matches + hockey_matches + basketball_matches + tennis_matches
     
     matches = []
-    for sport in sports:
-        for i in range(10):
-            home = random.choice(teams[sport])
-            away = random.choice([t for t in teams[sport] if t != home])
-            
-            match = Match(
-                home_team=home,
-                away_team=away,
-                sport=sport,
-                start_time=(datetime.now(timezone.utc) + timedelta(days=random.randint(0, 7))).isoformat(),
-                status=random.choice(["upcoming", "live", "upcoming", "upcoming"]),
-                home_odds=round(random.uniform(1.5, 3.5), 2),
-                away_odds=round(random.uniform(1.5, 3.5), 2),
-                draw_odds=round(random.uniform(2.5, 4.5), 2) if sport in ["Football", "Ice Hockey"] else None
-            )
-            matches.append(match.model_dump())
+    for match_data in all_matches:
+        match = Match(
+            **match_data,
+            start_time=(datetime.now(timezone.utc) + timedelta(days=random.randint(0, 7))).isoformat(),
+            status="upcoming"
+        )
+        matches.append(match.model_dump())
     
     await db.matches.insert_many(matches)
     
-    # Seed statistics
-    stats = []
-    for sport, team_list in teams.items():
-        for team in team_list:
-            for year in range(2020, 2026):
-                stat = Statistic(
-                    team=team,
-                    sport=sport,
-                    year=year,
-                    wins=random.randint(10, 40),
-                    losses=random.randint(5, 30),
-                    draws=random.randint(0, 15),
-                    goals_scored=random.randint(30, 100) if sport in ["Football", "Ice Hockey", "Basketball"] else None,
-                    goals_conceded=random.randint(20, 80) if sport in ["Football", "Ice Hockey", "Basketball"] else None
-                )
-                stats.append(stat.model_dump())
-    
-    await db.statistics.insert_many(stats)
-    
-    return {"message": "Data seeded successfully", "matches": len(matches), "statistics": len(stats)}
+    return {"message": "Data seeded successfully", "matches": len(matches)}
 
 app.include_router(api_router)
 
