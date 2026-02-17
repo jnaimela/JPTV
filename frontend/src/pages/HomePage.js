@@ -132,8 +132,7 @@ export default function HomePage() {
           {matches.map((match) => (
             <Card 
               key={match.id} 
-              className="match-card p-6 space-y-5 cursor-pointer group"
-              onClick={() => navigate(`/analysis/${match.id}`)}
+              className="match-card p-6 space-y-5 group"
               data-testid={`match-card-${match.id}`}
             >
               <div className="flex items-start justify-between">
