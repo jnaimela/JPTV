@@ -177,6 +177,7 @@ export default function HomePage() {
               </div>
 
               <Button 
+                onClick={() => navigate(`/analysis/${match.id}`)}
                 className="w-full gradient-button font-bold uppercase tracking-wider group-hover:scale-105 transition-transform"
                 data-testid={`view-analysis-${match.id}`}
               >
