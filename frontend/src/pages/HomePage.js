@@ -56,6 +56,22 @@ export default function HomePage() {
       console.error('Error loading matches:', error);
       setLoading(false);
     }
+
+  const updateLiveOdds = async () => {
+    if (matches.length === 0) return;
+    
+    // Update odds for a random match
+    const randomMatch = matches[Math.floor(Math.random() * matches.length)];
+    try {
+      const res = await axios.post(`${API}/matches/${randomMatch.id}/update-odds`);
+      setMatches(prevMatches =>
+        prevMatches.map(m => m.id === res.data.id ? res.data : m)
+      );
+    } catch (error) {
+      console.error('Error updating odds:', error);
+    }
+  };
+
   };
 
   const formatDate = (dateString) => {
