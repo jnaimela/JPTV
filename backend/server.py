@@ -512,10 +512,18 @@ async def seed_data():
     
     matches = []
     for match_data in all_matches:
+        # Add random odds
+        home_odds = round(random.uniform(1.5, 3.5), 2)
+        away_odds = round(random.uniform(1.5, 3.5), 2)
+        draw_odds = round(random.uniform(2.8, 4.5), 2) if match_data["sport"] in ["Football", "Ice Hockey"] else None
+        
         match = Match(
             **match_data,
             start_time=(datetime.now(timezone.utc) + timedelta(days=random.randint(0, 7))).isoformat(),
-            status="upcoming"
+            status="upcoming",
+            home_odds=home_odds,
+            away_odds=away_odds,
+            draw_odds=draw_odds
         )
         matches.append(match.model_dump())
     
