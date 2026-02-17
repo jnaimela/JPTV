@@ -529,7 +529,7 @@ async def seed_data():
     
     await db.matches.insert_many(matches)
     
-    return {"message": "Data seeded successfully", "matches": len(matches), "admin_created": not admin_exists}
+    return {"message": "Data seeded successfully", "matches": len(matches), "admin_created": not bool(admin_exists)}
 
 # News endpoint
 @api_router.get("/news")
