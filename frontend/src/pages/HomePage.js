@@ -7,37 +7,39 @@ import { AuthContext } from '../App';
 import { Button } from '../components/ui/button';
 import { Card } from '../components/ui/card';
 import { Badge } from '../components/ui/badge';
-import { Flame, TrendingUp, Calendar, Clock } from 'lucide-react';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '../components/ui/tabs';
+import { TrendingUp, Calendar, Trophy } from 'lucide-react';
 import { toast } from 'sonner';
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
 const API = `${BACKEND_URL}/api`;
 
 export default function HomePage() {
-  const { user, token } = useContext(AuthContext);
+  const { user } = useContext(AuthContext);
   const [matches, setMatches] = useState([]);
   const [loading, setLoading] = useState(true);
   const [authOpen, setAuthOpen] = useState(false);
-  const [selectedBets, setSelectedBets] = useState([]);
+  const [selectedSport, setSelectedSport] = useState('all');
   const navigate = useNavigate();
 
   useEffect(() => {
-    loadMatches();
     seedData();
-  }, []);
+    loadMatches();
+  }, [selectedSport]);
 
   const seedData = async () => {
     try {
       await axios.post(`${API}/seed-data`);
     } catch (error) {
-      console.log('Data already seeded or error:', error);
+      console.log('Data already seeded');
     }
   };
 
   const loadMatches = async () => {
     try {
-      const res = await axios.get(`${API}/matches`);
-      setMatches(res.data.filter(m => m.status === 'upcoming').slice(0, 12));
+      const query = selectedSport !== 'all' ? `?sport=${selectedSport}` : '';
+      const res = await axios.get(`${API}/matches${query}`);
+      setMatches(res.data);
       setLoading(false);
     } catch (error) {
       console.error('Error loading matches:', error);
@@ -45,37 +47,9 @@ export default function HomePage() {
     }
   };
 
-  const addToBetSlip = (match, betType, odds) => {
-    if (!user) {
-      setAuthOpen(true);
-      return;
-    }
-
-    const bet = {
-      match_id: match.id,
-      match: `${match.home_team} vs ${match.away_team}`,
-      bet_type: betType,
-      odds: odds,
-      sport: match.sport
-    };
-
-    const existing = selectedBets.find(b => b.match_id === match.id);
-    if (existing) {
-      setSelectedBets(selectedBets.map(b => b.match_id === match.id ? bet : b));
-    } else {
-      setSelectedBets([...selectedBets, bet]);
-    }
-    toast.success(`Lisätty vetolapppuun: ${betType}`);
-  };
-
   const formatDate = (dateString) => {
     const date = new Date(dateString);
-    return date.toLocaleDateString('fi-FI', { day: 'numeric', month: 'short' });
-  };
-
-  const formatTime = (dateString) => {
-    const date = new Date(dateString);
-    return date.toLocaleTimeString('fi-FI', { hour: '2-digit', minute: '2-digit' });
+    return date.toLocaleDateString('fi-FI', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' });
   };
 
   if (loading) {
@@ -90,139 +64,165 @@ export default function HomePage() {
   }
 
   return (
-    <div className="min-h-screen" data-testid="home-page">
+    <div className="min-h-screen bg-background" data-testid="home-page">
       <Navigation />
       
       {/* Hero Section */}
-      <div className="relative overflow-hidden border-b border-white/5">
-        <div 
-          className="absolute inset-0 opacity-20"
-          style={{
-            backgroundImage: 'url(https://images.unsplash.com/photo-1730652128205-f5e98e542786?crop=entropy&cs=srgb&fm=jpg&ixid=M3w4NjY2NzZ8MHwxfHNlYXJjaHwzfHxzb2NjZXIlMjBwbGF5ZXIlMjBzY29yaW5nJTIwZ29hbCUyMHN0YWRpdW0lMjBuaWdodCUyMG5lb24lMjBsaWdodHMlMjBhY3Rpb258ZW58MHx8fHwxNzcxMzQ5MDU1fDA&ixlib=rb-4.1.0&q=85)',
-            backgroundSize: 'cover',
-            backgroundPosition: 'center'
-          }}
-        />
-        <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-24">
-          <div className="text-center space-y-8">
-            <h1 className="font-heading text-5xl sm:text-6xl lg:text-7xl font-black tracking-tighter" data-testid="hero-title">
-              VOITA <span className="text-primary">SUURESTI</span>
-              <br />
-              <span className="text-secondary">PELAA ÄLYKÄÄSTI</span>
+      <div className="bg-gradient-to-br from-secondary/10 via-background to-primary/5 border-b border-border">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
+          <div className="text-center space-y-6">
+            <div className="inline-flex items-center gap-2 bg-primary/10 text-primary px-4 py-2 rounded-full text-sm font-semibold">
+              <TrendingUp className="w-4 h-4" />
+              AI-pohjaiset analyysit
+            </div>
+            <h1 className="font-heading text-4xl sm:text-5xl lg:text-6xl font-bold tracking-tight" data-testid="hero-title">
+              Asiantuntija-analyysit<br />
+              <span className="text-primary">jokaiseen otteluun</span>
             </h1>
             <p className="text-lg sm:text-xl text-muted-foreground max-w-2xl mx-auto" data-testid="hero-subtitle">
-              AI-pohjaiset analyysit, reaaliaikaiset kertoimet ja tilastot viimeiseltä 5 vuodelta
+              Syvälliset tilastolliset analyysit, vedonlyöntivinkit ja ennusteet suurimpiin urheilusarjoihin
             </p>
             {!user && (
-              <Button 
-                onClick={() => setAuthOpen(true)} 
-                size="lg" 
-                className="neon-glow text-lg px-8 py-6 font-bold uppercase"
-                data-testid="hero-cta-button"
-              >
-                <Flame className="w-5 h-5 mr-2" />
-                Aloita nyt
-              </Button>
+              <div className="flex flex-col sm:flex-row gap-4 justify-center">
+                <Button 
+                  onClick={() => setAuthOpen(true)} 
+                  size="lg" 
+                  className="bg-primary hover:bg-primary/90 text-lg px-8 font-semibold"
+                  data-testid="hero-cta-button"
+                >
+                  Aloita ilmaiseksi
+                </Button>
+                <Button 
+                  onClick={() => navigate('/pricing')} 
+                  size="lg" 
+                  variant="outline"
+                  className="text-lg px-8 font-semibold"
+                  data-testid="hero-pricing-button"
+                >
+                  Näytä hinnat
+                </Button>
+              </div>
             )}
           </div>
         </div>
       </div>
 
-      {/* Matches Grid */}
+      {/* Matches Section */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-        <div className="flex items-center justify-between mb-8">
-          <h2 className="font-heading text-4xl font-black tracking-tight" data-testid="matches-heading">
-            TULEVAT OTTELUT
+        <div className="mb-8">
+          <h2 className="font-heading text-3xl font-bold mb-6" data-testid="analyses-heading">
+            Tulevat analyysit
           </h2>
-          <Button onClick={() => navigate('/live')} variant="outline" className="gap-2" data-testid="view-live-button">
-            <TrendingUp className="w-4 h-4" />
-            Katso live-vedot
-          </Button>
+          
+          <Tabs value={selectedSport} onValueChange={setSelectedSport} className="w-full" data-testid="sport-tabs">
+            <TabsList className="mb-6">
+              <TabsTrigger value="all">Kaikki</TabsTrigger>
+              <TabsTrigger value="Football">Jalkapallo</TabsTrigger>
+              <TabsTrigger value="Ice Hockey">Jääkiekko</TabsTrigger>
+              <TabsTrigger value="Basketball">Koripallo</TabsTrigger>
+              <TabsTrigger value="Tennis">Tennis</TabsTrigger>
+            </TabsList>
+          </Tabs>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6" data-testid="matches-grid">
           {matches.map((match) => (
             <Card 
               key={match.id} 
-              className="bet-card glassmorphism p-6 space-y-4 group hover:border-primary/50"
+              className="match-card p-6 space-y-4 hover:shadow-lg cursor-pointer"
+              onClick={() => navigate(`/analysis/${match.id}`)}
               data-testid={`match-card-${match.id}`}
             >
               <div className="flex items-start justify-between">
-                <Badge variant="outline" className="text-xs" data-testid={`sport-badge-${match.id}`}>
-                  {match.sport}
+                <Badge variant="outline" className="text-xs" data-testid={`league-badge-${match.id}`}>
+                  {match.league}
                 </Badge>
-                <div className="flex items-center gap-3 text-xs text-muted-foreground">
-                  <div className="flex items-center gap-1">
-                    <Calendar className="w-3 h-3" />
-                    {formatDate(match.start_time)}
-                  </div>
-                  <div className="flex items-center gap-1">
-                    <Clock className="w-3 h-3" />
-                    {formatTime(match.start_time)}
-                  </div>
+                <div className="flex items-center gap-1 text-xs text-muted-foreground">
+                  <Calendar className="w-3 h-3" />
+                  {formatDate(match.start_time)}
                 </div>
               </div>
 
               <div className="space-y-3">
-                <div className="flex items-center justify-between" data-testid={`teams-${match.id}`}>
-                  <div className="font-heading text-xl font-bold">{match.home_team}</div>
-                  <div className="text-muted-foreground font-bold">VS</div>
-                  <div className="font-heading text-xl font-bold">{match.away_team}</div>
+                <div className="text-center" data-testid={`teams-${match.id}`}>
+                  <div className="font-semibold text-lg">{match.home_team}</div>
+                  <div className="text-muted-foreground text-sm my-2">vs</div>
+                  <div className="font-semibold text-lg">{match.away_team}</div>
                 </div>
 
-                <div className="grid grid-cols-3 gap-2">
-                  <Button
-                    onClick={() => addToBetSlip(match, 'home', match.home_odds)}
-                    variant="outline"
-                    className="odds-button flex-col h-auto py-3 border-primary/30 hover:bg-primary hover:text-primary-foreground"
-                    data-testid={`bet-home-${match.id}`}
-                  >
-                    <span className="text-xs opacity-70">Koti</span>
-                    <span className="font-heading text-lg font-black text-primary">{match.home_odds}</span>
-                  </Button>
-                  {match.draw_odds && (
-                    <Button
-                      onClick={() => addToBetSlip(match, 'draw', match.draw_odds)}
-                      variant="outline"
-                      className="odds-button flex-col h-auto py-3 border-secondary/30 hover:bg-secondary hover:text-secondary-foreground"
-                      data-testid={`bet-draw-${match.id}`}
-                    >
-                      <span className="text-xs opacity-70">Tasapeli</span>
-                      <span className="font-heading text-lg font-black text-secondary">{match.draw_odds}</span>
-                    </Button>
-                  )}
-                  <Button
-                    onClick={() => addToBetSlip(match, 'away', match.away_odds)}
-                    variant="outline"
-                    className="odds-button flex-col h-auto py-3 border-accent/30 hover:bg-accent hover:text-accent-foreground"
-                    data-testid={`bet-away-${match.id}`}
-                  >
-                    <span className="text-xs opacity-70">Vieras</span>
-                    <span className="font-heading text-lg font-black text-accent">{match.away_odds}</span>
-                  </Button>
-                </div>
+                {match.home_form && match.away_form && (
+                  <div className="flex justify-between text-xs">
+                    <div className="flex gap-1">
+                      {match.home_form.split('').map((result, i) => (
+                        <span key={i} className={`w-5 h-5 rounded-full flex items-center justify-center ${
+                          result === 'W' ? 'bg-green-500/20 text-green-500' : 
+                          result === 'D' ? 'bg-yellow-500/20 text-yellow-500' : 
+                          'bg-red-500/20 text-red-500'
+                        }`}>{result}</span>
+                      ))}
+                    </div>
+                    <div className="flex gap-1">
+                      {match.away_form.split('').map((result, i) => (
+                        <span key={i} className={`w-5 h-5 rounded-full flex items-center justify-center ${
+                          result === 'W' ? 'bg-green-500/20 text-green-500' : 
+                          result === 'D' ? 'bg-yellow-500/20 text-yellow-500' : 
+                          'bg-red-500/20 text-red-500'
+                        }`}>{result}</span>
+                      ))}
+                    </div>
+                  </div>
+                )}
               </div>
+
+              <Button 
+                className="w-full bg-primary hover:bg-primary/90 font-semibold"
+                data-testid={`view-analysis-${match.id}`}
+              >
+                Näytä analyysi
+              </Button>
             </Card>
           ))}
         </div>
+
+        {matches.length === 0 && (
+          <Card className="p-12 text-center" data-testid="no-matches">
+            <Trophy className="w-16 h-16 text-muted-foreground mx-auto mb-4" />
+            <div className="text-muted-foreground text-lg">
+              Ei otteluita valitulle lajille
+            </div>
+          </Card>
+        )}
       </div>
 
-      {/* Floating Bet Slip */}
-      {selectedBets.length > 0 && (
-        <div className="fixed bottom-8 right-8 z-40" data-testid="floating-bet-slip">
-          <Button
-            onClick={() => {
-              localStorage.setItem('betSlip', JSON.stringify(selectedBets));
-              navigate('/bet-slip');
-            }}
-            size="lg"
-            className="neon-glow-accent rounded-full px-8 py-6 font-bold shadow-2xl"
-            data-testid="open-bet-slip-button"
-          >
-            Vetolappu ({selectedBets.length})
-          </Button>
+      {/* Features Section */}
+      <div className="bg-muted/30 py-16 border-t border-border">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <h2 className="font-heading text-3xl font-bold text-center mb-12">Miksi ProSportsTips?</h2>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+            <div className="text-center space-y-3">
+              <div className="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center mx-auto">
+                <TrendingUp className="w-8 h-8 text-primary" />
+              </div>
+              <h3 className="font-heading text-xl font-bold">AI-analyysit</h3>
+              <p className="text-muted-foreground">GPT-5.2 -pohjainen syväanalyysi joka otteluun</p>
+            </div>
+            <div className="text-center space-y-3">
+              <div className="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center mx-auto">
+                <BarChart3 className="w-8 h-8 text-primary" />
+              </div>
+              <h3 className="font-heading text-xl font-bold">Tilastot</h3>
+              <p className="text-muted-foreground">Kattavat tilastot ja joukkueiden muoto-analyysi</p>
+            </div>
+            <div className="text-center space-y-3">
+              <div className="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center mx-auto">
+                <Trophy className="w-8 h-8 text-primary" />
+              </div>
+              <h3 className="font-heading text-xl font-bold">Vedonlyöntivinkit</h3>
+              <p className="text-muted-foreground">Konkreettiset vinkit ja perustelut vedonlyöntiin</p>
+            </div>
+          </div>
         </div>
-      )}
+      </div>
 
       <AuthDialog open={authOpen} onClose={() => setAuthOpen(false)} />
     </div>
