@@ -36,8 +36,9 @@ class User(BaseModel):
     email: str
     username: str
     password_hash: str
-    subscription_tier: str = "free"  # free, basic, pro, premium
+    subscription_tier: str = "free"  # free, basic, pro, premium, admin
     free_analyses_used: int = 0
+    is_admin: bool = False
     created_at: str = Field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
 
 class UserCreate(BaseModel):
