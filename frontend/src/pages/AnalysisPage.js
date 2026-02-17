@@ -27,6 +27,7 @@ export default function AnalysisPage() {
 
   useEffect(() => {
     loadMatchAndAnalysis();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [matchId, user]);
 
   const loadMatchAndAnalysis = async () => {
