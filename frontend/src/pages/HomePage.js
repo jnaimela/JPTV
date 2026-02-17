@@ -29,6 +29,15 @@ export default function HomePage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedSport]);
 
+  useEffect(() => {
+    // Update odds every 15 seconds
+    const interval = setInterval(() => {
+      updateLiveOdds();
+    }, 15000);
+    return () => clearInterval(interval);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [matches]);
+
   const seedData = async () => {
     try {
       await axios.post(`${API}/seed-data`);
