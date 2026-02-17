@@ -197,7 +197,7 @@ async def get_analysis(match_id: str, authorization: Optional[str] = Header(None
         try:
             user_data = verify_token(authorization.split(" ")[1])
             user = await db.users.find_one({"id": user_data["user_id"]}, {"_id": 0})
-            if user and user["subscription_tier"] != "free":
+            if user and (user["subscription_tier"] != "free" or user.get("is_admin", False)):
                 can_access_full = True
         except:
             pass
