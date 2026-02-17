@@ -5,7 +5,7 @@ import { Navigation } from '../components/Navigation';
 import { AuthContext } from '../App';
 import { Card } from '../components/ui/card';
 import { Button } from '../components/ui/button';
-import { CheckCircle2, Loader2 } from 'lucide-react';
+import { CheckCircle2, Loader2, AlertCircle } from 'lucide-react';
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
 const API = `${BACKEND_URL}/api`;
@@ -16,7 +16,7 @@ export default function PaymentSuccessPage() {
   const [status, setStatus] = useState('loading');
   const [attempts, setAttempts] = useState(0);
   const navigate = useNavigate();
-  const { user } = useContext(AuthContext);
+  const { refreshUser } = useContext(AuthContext);
 
   useEffect(() => {
     if (sessionId) {
@@ -39,8 +39,7 @@ export default function PaymentSuccessPage() {
 
       if (res.data.payment_status === 'paid') {
         setStatus('success');
-        // Reload user data
-        window.location.reload();
+        await refreshUser();
       } else if (res.data.status === 'expired') {
         setStatus('error');
       } else {
@@ -58,9 +57,9 @@ export default function PaymentSuccessPage() {
 
       <div className="max-w-2xl mx-auto px-4 sm:px-6 lg:px-8 py-24">
         {status === 'loading' && (
-          <Card className="glassmorphism p-12 text-center" data-testid="payment-loading">
-            <Loader2 className="w-16 h-16 text-primary mx-auto mb-6 animate-spin" />
-            <h1 className="font-heading text-3xl font-bold mb-4">Tarkistetaan maksua...</h1>
+          <Card className="p-12 text-center border-primary/30" data-testid="payment-loading">
+            <Loader2 className="w-20 h-20 text-primary mx-auto mb-6 animate-spin" />
+            <h1 className="font-heading text-3xl font-bold mb-4 gradient-text">Tarkistetaan maksua...</h1>
             <p className="text-muted-foreground">
               Odota hetki, käsittelemme maksusi.
             </p>
@@ -68,19 +67,30 @@ export default function PaymentSuccessPage() {
         )}
 
         {status === 'success' && (
-          <Card className="glassmorphism p-12 text-center border-success/30" data-testid="payment-success">
-            <CheckCircle2 className="w-16 h-16 text-success mx-auto mb-6" />
-            <h1 className="font-heading text-4xl font-black mb-4 text-success">
+          <Card className="p-12 text-center border-green-500/30" data-testid="payment-success">
+            <CheckCircle2 className="w-20 h-20 text-green-400 mx-auto mb-6" />
+            <h1 className="font-heading text-4xl font-bold mb-4 gradient-text">
               MAKSU ONNISTUI!
             </h1>
             <p className="text-lg text-muted-foreground mb-8">
               Kiitos tilauksestasi! Premium-ominaisuudet ovat nyt käytettävissäsi.
             </p>
-            <div className="flex gap-4 justify-center">
-              <Button onClick={() => navigate('/analysis')} className="neon-glow" data-testid="go-to-analysis-button">
-                Kokeile AI-analyysejä
+            <div className="flex flex-col sm:flex-row gap-4 justify-center">
+              <Button 
+                onClick={() => navigate('/')} 
+                className="gradient-button font-bold uppercase"
+                size="lg"
+                data-testid="browse-analyses-button"
+              >
+                Selaa analyysejä
               </Button>
-              <Button onClick={() => navigate('/profile')} variant="outline" data-testid="go-to-profile-button">
+              <Button 
+                onClick={() => navigate('/profile')} 
+                variant="outline" 
+                className="border-primary/40 hover:border-primary"
+                size="lg"
+                data-testid="go-to-profile-button"
+              >
                 Profiiliin
               </Button>
             </div>
@@ -88,28 +98,40 @@ export default function PaymentSuccessPage() {
         )}
 
         {status === 'error' && (
-          <Card className="glassmorphism p-12 text-center border-error/30" data-testid="payment-error">
-            <h1 className="font-heading text-3xl font-bold mb-4 text-error">
+          <Card className="p-12 text-center border-red-500/30" data-testid="payment-error">
+            <AlertCircle className="w-20 h-20 text-red-400 mx-auto mb-6" />
+            <h1 className="font-heading text-3xl font-bold mb-4 text-red-400">
               Maksun käsittely epäonnistui
             </h1>
             <p className="text-muted-foreground mb-8">
               Jotain meni pieleen. Yritä uudelleen tai ota yhteyttä tukeen.
             </p>
-            <Button onClick={() => navigate('/pricing')} data-testid="retry-payment-button">
+            <Button 
+              onClick={() => navigate('/pricing')} 
+              className="gradient-button"
+              size="lg"
+              data-testid="retry-payment-button"
+            >
               Takaisin hinnoitteluun
             </Button>
           </Card>
         )}
 
         {status === 'timeout' && (
-          <Card className="glassmorphism p-12 text-center border-warning/30" data-testid="payment-timeout">
-            <h1 className="font-heading text-3xl font-bold mb-4 text-warning">
-              Maksun tarkistus aikakatkaistiin
+          <Card className="p-12 text-center border-yellow-500/30" data-testid="payment-timeout">
+            <AlertCircle className="w-20 h-20 text-yellow-400 mx-auto mb-6" />
+            <h1 className="font-heading text-3xl font-bold mb-4 text-yellow-400">
+              Maksun tarkistus aikakatkais tui
             </h1>
             <p className="text-muted-foreground mb-8">
               Maksun käsittely voi kestää hetken. Tarkista sähköpostisi vahvistusta varten.
             </p>
-            <Button onClick={() => navigate('/profile')} data-testid="check-profile-button">
+            <Button 
+              onClick={() => navigate('/profile')} 
+              className="gradient-button"
+              size="lg"
+              data-testid="check-profile-button"
+            >
               Tarkista profiili
             </Button>
           </Card>
