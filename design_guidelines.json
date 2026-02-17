@@ -1,0 +1,164 @@
+{
+  "identity": {
+    "name": "E1",
+    "persona": "The Anti-AI Designer",
+    "principles": [
+      "Fusion over Imitation",
+      "Emotion First",
+      "Content is King",
+      "Zoom In",
+      "Negative Space",
+      "Contrast"
+    ]
+  },
+  "project": {
+    "name": "NeonBet",
+    "description": "High-contrast, cyberpunk-inspired betting platform",
+    "theme": "dark",
+    "archetype": "ELECTRIC & NEON"
+  },
+  "typography": {
+    "headings": {
+      "family": "Chivo",
+      "weights": ["900", "700"],
+      "usage": "Use for all major headings, odds, and impact numbers. Tracking tight.",
+      "import_url": "https://fonts.googleapis.com/css2?family=Chivo:ital,wght@0,100..900;1,100..900&display=swap"
+    },
+    "body": {
+      "family": "Manrope",
+      "weights": ["400", "500", "600"],
+      "usage": "Use for all body text, UI labels, and data tables.",
+      "import_url": "https://fonts.googleapis.com/css2?family=Manrope:wght@200..800&display=swap"
+    },
+    "mono": {
+      "family": "JetBrains Mono",
+      "weights": ["400"],
+      "usage": "Use for live timers, tickers, and wallet addresses."
+    }
+  },
+  "colors": {
+    "base": {
+      "background": "#020617",
+      "foreground": "#F8FAFC",
+      "card": "#0F172A",
+      "card_foreground": "#F8FAFC",
+      "border": "#1E293B"
+    },
+    "brand": {
+      "primary": "#39FF14",
+      "primary_foreground": "#000000",
+      "secondary": "#00F3FF",
+      "secondary_foreground": "#000000",
+      "accent": "#F72585",
+      "accent_foreground": "#FFFFFF"
+    },
+    "functional": {
+      "success": "#39FF14",
+      "warning": "#FFE600",
+      "error": "#FF003C",
+      "info": "#00F3FF"
+    },
+    "gradients": {
+      "hero": "linear-gradient(135deg, #020617 0%, #0F172A 100%)",
+      "accent_glow": "linear-gradient(90deg, #39FF14, #00F3FF)"
+    }
+  },
+  "layout": {
+    "grid_system": "Bento Grid (Mode A for Home, Mode B for Dashboard)",
+    "spacing": "Generous (2x standard Tailwind). Use p-8, gap-6.",
+    "container": "max-w-7xl mx-auto px-4 sm:px-6 lg:px-8",
+    "radius": "rounded-none"
+  },
+  "components": {
+    "Button": {
+      "styles": "rounded-sm font-bold uppercase tracking-wider transition-all duration-300",
+      "variants": {
+        "default": "bg-primary text-primary-foreground hover:bg-primary/90 hover:shadow-[0_0_20px_rgba(57,255,20,0.5)]",
+        "outline": "border-2 border-primary text-primary hover:bg-primary hover:text-primary-foreground",
+        "ghost": "hover:bg-accent hover:text-accent-foreground"
+      }
+    },
+    "Card": {
+      "styles": "bg-card/50 backdrop-blur-xl border border-white/5 shadow-2xl overflow-hidden relative group",
+      "features": "Add a glowing top border on hover: group-hover:border-t-primary/50 transition-all duration-500"
+    },
+    "Input": {
+      "styles": "bg-black/20 border-b-2 border-white/10 focus:border-primary rounded-none px-4 py-3 placeholder:text-white/20 transition-colors"
+    }
+  },
+  "visual_enhancers": {
+    "glassmorphism": "backdrop-blur-xl bg-black/40 border border-white/10",
+    "neon_glow": "box-shadow: 0 0 10px var(--color-primary), 0 0 20px var(--color-primary)",
+    "scanlines": "background: repeating-linear-gradient(0deg, transparent, transparent 2px, #000 3px, #000 3px)",
+    "noise": "url('data:image/svg+xml;base64,...') opacity-5"
+  },
+  "motion": {
+    "transitions": "transition-all duration-300 ease-out",
+    "hover_effects": "translate-y-[-2px] brightness-110",
+    "page_load": "staggered fade-in-up"
+  },
+  "images": {
+    "hero_backgrounds": [
+      {
+        "url": "https://images.unsplash.com/photo-1730652128205-f5e98e542786?crop=entropy&cs=srgb&fm=jpg&ixid=M3w4NjY2NzZ8MHwxfHNlYXJjaHwzfHxzb2NjZXIlMjBwbGF5ZXIlMjBzY29yaW5nJTIwZ29hbCUyMHN0YWRpdW0lMjBuaWdodCUyMG5lb24lMjBsaWdodHMlMjBhY3Rpb258ZW58MHx8fHwxNzcxMzQ5MDU1fDA&ixlib=rb-4.1.0&q=85",
+        "alt": "Soccer player running at night",
+        "category": "hero"
+      },
+      {
+        "url": "https://images.unsplash.com/photo-1763663809999-8da484d65285?crop=entropy&cs=srgb&fm=jpg&ixid=M3w4NjY2NzV8MHwxfHNlYXJjaHwyfHxiYXNrZXRiYWxsJTIwZ2FtZSUyMG5pZ2h0JTIwYWN0aW9ufGVufDB8fHx8MTc3MTM0OTA2MHww&ixlib=rb-4.1.0&q=85",
+        "alt": "Basketball hoop night",
+        "category": "hero"
+      }
+    ],
+    "avatars": [
+      {
+        "url": "https://images.unsplash.com/photo-1761075665831-8db1cc33a2b1?crop=entropy&cs=srgb&fm=jpg&ixid=M3w4NTYxODh8MHwxfHNlYXJjaHw0fHxjeWJlcnB1bmslMjB1c2VyJTIwYXZhdGFyJTIwcG9ydHJhaXQlMjBuZW9ufGVufDB8fHx8MTc3MTM0OTA2Mnww&ixlib=rb-4.1.0&q=85",
+        "alt": "Digital Avatar",
+        "category": "user"
+      },
+      {
+        "url": "https://images.unsplash.com/photo-1594085087803-e65bf4e3f8d6?crop=entropy&cs=srgb&fm=jpg&ixid=M3w4NTYxODh8MHwxfHNlYXJjaHwzfHxjeWJlcnB1bmslMjB1c2VyJTIwYXZhdGFyJTIwcG9ydHJhaXQlMjBuZW9ufGVufDB8fHx8MTc3MTM0OTA2Mnww&ixlib=rb-4.1.0&q=85",
+        "alt": "Red hair woman",
+        "category": "user"
+      }
+    ],
+    "logos": [
+      {
+        "url": "https://images.unsplash.com/photo-1728406970302-8be1af6bda4c?crop=entropy&cs=srgb&fm=jpg&ixid=M3w3NTY2Nzd8MHwxfHNlYXJjaHwzfHxtb2Rlcm4lMjBzcG9ydHMlMjB0ZWFtJTIwbG9nbyUyMHNoaWVsZCUyMG1pbmltYWx8ZW58MHx8fHwxNzcxMzQ5MDYyfDA&ixlib=rb-4.1.0&q=85",
+        "alt": "Red Spiral Logo",
+        "category": "team_logo"
+      },
+      {
+        "url": "https://images.unsplash.com/photo-1767695086479-869f10facf90?crop=entropy&cs=srgb&fm=jpg&ixid=M3w3NTY2Nzd8MHwxfHNlYXJjaHwxfHxtb2Rlcm4lMjBzcG9ydHMlMjB0ZWFtJTIwbG9nbyUyMHNoaWVsZCUyMG1pbmltYWx8ZW58MHx8fHwxNzcxMzQ5MDYyfDA&ixlib=rb-4.1.0&q=85",
+        "alt": "Orange Helipad Logo",
+        "category": "team_logo"
+      }
+    ]
+  },
+  "icons": {
+    "library": "lucide-react",
+    "style": "Stroke width 1.5px, crisp edges."
+  },
+  "instructions_to_main_agent": [
+    "Use 'Chivo' font for all headings. Import it in index.css.",
+    "Implement the dark theme by default. Set class='dark' on the html/body.",
+    "Do not use gradients for backgrounds, only for accents (buttons, borders).",
+    "Use the Bento Grid layout for the dashboard home page.",
+    "For the 'Live Bets' section, use the 'Electric & Neon' color palette (Pink/Green) to denote live activity.",
+    "Ensure all interactive elements have data-testid attributes.",
+    "Use glassmorphism for cards and overlays.",
+    "Avoid rounded corners on buttons and inputs; keep them sharp (rounded-sm or rounded-none) for a tech feel."
+  ],
+  "UNIVERSAL_GUIDELINES_FOR_MAIN_AGENT": [
+    "You tend to converge toward generic, 'on distribution' outputs. Avoid this.",
+    "Don't make generic centered layouts.",
+    "Create depth through layered design elements with z-index hierarchy.",
+    "Use glass-morphism effects with backdrop filters.",
+    "Every interaction needs micro-animations.",
+    "Use 2-3x more spacing than feels comfortable.",
+    "Prioritize using pre-existing components from src/components/ui.",
+    "Components MUST use named exports.",
+    "Pages MUST use default exports.",
+    "Use sonner for toasts."
+  ]
+}
