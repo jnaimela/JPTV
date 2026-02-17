@@ -114,6 +114,16 @@ export default function HomePage() {
 
       {/* Matches Section */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
+        {/* Live Scores */}
+        <div className="mb-16">
+          <LiveScores />
+        </div>
+
+        {/* News Feed */}
+        <div className="mb-16">
+          <NewsFeed />
+        </div>
+
         <div className="mb-10">
           <h2 className="font-heading text-4xl font-bold mb-2 gradient-text" data-testid="analyses-heading">
             Tulevat analyysit
