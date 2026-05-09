@@ -211,14 +211,24 @@ async def update_match_odds(match_id: str):
 # Analysis Routes
 @api_router.get("/analyses")
 async def get_analyses(sport: Optional[str] = None):
-    query = {}
     if sport:
-        # Get matches for this sport
-        matches = await db.matches.find({"sport": sport}, {"id": 1, "_id": 0}).to_list(100)
-        match_ids = [m["id"] for m in matches]
-        query["match_id"] = {"$in": match_ids}
-    
-    analyses = await db.analyses.find(query, {"_id": 0}).sort("created_at", -1).to_list(50)
+        # Use aggregation to join and filter in one query (optimized)
+        pipeline = [
+            {"$lookup": {
+                "from": "matches",
+                "localField": "match_id",
+                "foreignField": "id",
+                "as": "match"
+            }},
+            {"$unwind": "$match"},
+            {"$match": {"match.sport": sport}},
+            {"$project": {"_id": 0, "match": 0}},
+            {"$sort": {"created_at": -1}},
+            {"$limit": 50}
+        ]
+        analyses = await db.analyses.aggregate(pipeline).to_list(50)
+    else:
+        analyses = await db.analyses.find({}, {"_id": 0}).sort("created_at", -1).limit(50).to_list(50)
     return analyses
 
 @api_router.get("/analyses/{match_id}")
