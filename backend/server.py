@@ -25,7 +25,7 @@ db = client[os.environ['DB_NAME']]
 app = FastAPI()
 api_router = APIRouter(prefix="/api")
 
-JWT_SECRET = os.getenv("JWT_SECRET", "your-secret-key-change-in-production")
+JWT_SECRET = os.environ["JWT_SECRET"]  # Required - no fallback for security
 JWT_ALGORITHM = "HS256"
 
 # Pydantic Models
