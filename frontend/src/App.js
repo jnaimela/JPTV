@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import axios from 'axios';
 import '@/App.css';
@@ -44,7 +44,7 @@ function App() {
     }
   }, [token]); // Added dependency
 
-  const login = async (email, password) => {
+  const login = useCallback(async (email, password) => {
     try {
       const res = await axios.post(`${API}/auth/login`, { email, password });
       setToken(res.data.token);
@@ -56,9 +56,9 @@ function App() {
       toast.error('Virheelliset tunnukset');
       return false;
     }
-  };
+  }, []);
 
-  const register = async (email, username, password) => {
+  const register = useCallback(async (email, username, password) => {
     try {
       const res = await axios.post(`${API}/auth/register`, { email, username, password });
       setToken(res.data.token);
@@ -70,16 +70,16 @@ function App() {
       toast.error(error.response?.data?.detail || 'Rekisteröinti epäonnistui');
       return false;
     }
-  };
+  }, []);
 
-  const logout = () => {
+  const logout = useCallback(() => {
     setToken(null);
     setUser(null);
     localStorage.removeItem('token');
     toast.success('Kirjauduttu ulos');
-  };
+  }, []);
 
-  const refreshUser = async () => {
+  const refreshUser = useCallback(async () => {
     if (token) {
       try {
         const res = await axios.get(`${API}/user/profile`, {
@@ -87,10 +87,21 @@ function App() {
         });
         setUser(res.data);
       } catch (error) {
-        // Error logged
-      }
+      // Error logged for debugging
+      if (process.env.NODE_ENV === "development") console.error(error);
     }
-  };
+    }
+  }, [token]);
+
+  // Memoize auth context value to prevent unnecessary re-renders
+  const authContextValue = useMemo(() => ({
+    user,
+    token,
+    login,
+    register,
+    logout,
+    refreshUser
+  }), [user, token, login, register, logout, refreshUser]);
 
   if (loading) {
     return (
@@ -101,7 +112,7 @@ function App() {
   }
 
   return (
-    <AuthContext.Provider value={{ user, token, login, register, logout, refreshUser }}>
+    <AuthContext.Provider value={authContextValue}>
       <div className="App">
         <BrowserRouter>
           <Routes>
@@ -119,3 +130,4 @@ function App() {
 }
 
 export default App;
+

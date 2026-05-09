@@ -9,7 +9,8 @@ from pydantic import BaseModel, Field, ConfigDict
 from typing import List, Optional, Dict, Any
 import uuid
 from datetime import datetime, timezone, timedelta
-import random
+import secrets as secure_random
+import random  # Only for non-security operations
 import bcrypt
 import jwt
 from emergentintegrations.llm.chat import LlmChat, UserMessage
@@ -184,9 +185,10 @@ async def update_match_odds(match_id: str):
     if not match:
         raise HTTPException(status_code=404, detail="Match not found")
     
-    # Simulate odds changes (±0.1 to ±0.3)
-    home_change = random.uniform(-0.3, 0.3)
-    away_change = random.uniform(-0.3, 0.3)
+    # Simulate odds changes (±0.1 to ±0.3) - using secrets for security
+    rng = secure_random.SystemRandom()
+    home_change = rng.uniform(-0.3, 0.3)
+    away_change = rng.uniform(-0.3, 0.3)
     
     new_home_odds = max(1.1, min(10.0, match.get("home_odds", 2.0) + home_change))
     new_away_odds = max(1.1, min(10.0, match.get("away_odds", 2.0) + away_change))
@@ -198,7 +200,7 @@ async def update_match_odds(match_id: str):
     }
     
     if match.get("draw_odds"):
-        draw_change = random.uniform(-0.2, 0.2)
+        draw_change = rng.uniform(-0.2, 0.2)
         new_draw_odds = max(1.1, min(10.0, match.get("draw_odds", 3.0) + draw_change))
         update_data["draw_odds"] = round(new_draw_odds, 2)
     

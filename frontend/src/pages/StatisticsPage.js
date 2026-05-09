@@ -113,7 +113,7 @@ export default function StatisticsPage() {
               <div className="font-heading text-2xl font-bold mb-4">{team}</div>
               <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
                 {stats.map((stat, index) => (
-                  <div key={index} className="text-center p-4 glassmorphism rounded-sm" data-testid={`stat-${team}-${stat.year}`}>
+                  <div key={`stat-${team}-${stat.year}`} className="text-center p-4 glassmorphism rounded-sm" data-testid={`stat-${team}-${stat.year}`}>
                     <div className="text-sm text-muted-foreground mb-2">{stat.year}</div>
                     <div className="space-y-2">
                       <div>

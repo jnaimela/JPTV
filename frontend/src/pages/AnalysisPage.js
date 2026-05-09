@@ -57,7 +57,8 @@ export default function AnalysisPage() {
       const res = await axios.post(`${API}/analyses/generate?match_id=${matchId}`);
       setAnalysis({ ...res.data, locked: true });
     } catch (error) {
-      // Error logged
+      // Error logged for debugging
+      if (process.env.NODE_ENV === "development") console.error(error);
     }
     setGenerating(false);
   };

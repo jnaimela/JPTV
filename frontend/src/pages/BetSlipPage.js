@@ -80,7 +80,7 @@ export default function BetSlipPage() {
 
         <div className="space-y-6">
           {bets.map((bet, index) => (
-            <Card key={index} className="glassmorphism p-6" data-testid={`bet-item-${index}`}>
+            <Card key={`bet-${bet.match_id || index}`} className="glassmorphism p-6" data-testid={`bet-item-${index}`}>
               <div className="flex items-center justify-between">
                 <div className="flex-1">
                   <div className="font-heading text-xl font-bold">{bet.match}</div>

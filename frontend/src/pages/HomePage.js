@@ -42,7 +42,8 @@ export default function HomePage() {
     try {
       await axios.post(`${API}/seed-data`);
     } catch (error) {
-      // Removed console.log
+      // Error logged for debugging
+      if (process.env.NODE_ENV === "development") console.error(error);
     }
   };
 
@@ -68,7 +69,8 @@ export default function HomePage() {
         prevMatches.map(m => m.id === res.data.id ? res.data : m)
       );
     } catch (error) {
-      // Error logged
+      // Error logged for debugging
+      if (process.env.NODE_ENV === "development") console.error(error);
     }
   };
 
@@ -297,3 +299,4 @@ export default function HomePage() {
     </div>
   );
 }
+
