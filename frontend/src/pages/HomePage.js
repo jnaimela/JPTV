@@ -57,6 +57,7 @@ export default function HomePage() {
       // Error logged
       setLoading(false);
     }
+  };
 
   const updateLiveOdds = async () => {
     if (matches.length === 0) return;
@@ -72,8 +73,6 @@ export default function HomePage() {
       // Error logged for debugging
       if (process.env.NODE_ENV === "development") console.error(error);
     }
-  };
-
   };
 
   const formatDate = (dateString) => {
