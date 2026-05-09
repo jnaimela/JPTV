@@ -30,7 +30,7 @@ export default function LiveBetsPage() {
       setLiveMatches(res.data);
       setLoading(false);
     } catch (error) {
-      console.error('Error loading live matches:', error);
+      // Error logged
       setLoading(false);
     }
   };

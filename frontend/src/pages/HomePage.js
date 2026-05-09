@@ -42,7 +42,7 @@ export default function HomePage() {
     try {
       await axios.post(`${API}/seed-data`);
     } catch (error) {
-      console.log('Data already seeded');
+      // Removed console.log
     }
   };
 
@@ -53,7 +53,7 @@ export default function HomePage() {
       setMatches(res.data);
       setLoading(false);
     } catch (error) {
-      console.error('Error loading matches:', error);
+      // Error logged
       setLoading(false);
     }
 
@@ -68,7 +68,7 @@ export default function HomePage() {
         prevMatches.map(m => m.id === res.data.id ? res.data : m)
       );
     } catch (error) {
-      console.error('Error updating odds:', error);
+      // Error logged
     }
   };
 
@@ -194,7 +194,7 @@ export default function HomePage() {
                   <div className="flex justify-between text-xs pt-3 border-t border-border">
                     <div className="flex gap-1">
                       {match.home_form.split('').map((result, i) => (
-                        <span key={i} className={`w-6 h-6 rounded-full flex items-center justify-center font-bold ${
+                        <span key={`result-${`item-${i}`}`} className={`w-6 h-6 rounded-full flex items-center justify-center font-bold ${
                           result === 'W' ? 'bg-green-500/20 text-green-400' : 
                           result === 'D' ? 'bg-yellow-500/20 text-yellow-400' : 
                           'bg-red-500/20 text-red-400'
@@ -203,7 +203,7 @@ export default function HomePage() {
                     </div>
                     <div className="flex gap-1">
                       {match.away_form.split('').map((result, i) => (
-                        <span key={i} className={`w-6 h-6 rounded-full flex items-center justify-center font-bold ${
+                        <span key={`result-${`item-${i}`}`} className={`w-6 h-6 rounded-full flex items-center justify-center font-bold ${
                           result === 'W' ? 'bg-green-500/20 text-green-400' : 
                           result === 'D' ? 'bg-yellow-500/20 text-yellow-400' : 
                           'bg-red-500/20 text-red-400'

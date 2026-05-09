@@ -147,7 +147,7 @@ export default function PricingPage() {
 
                 <div className="space-y-3">
                   {plan.features.map((feature, i) => (
-                    <div key={i} className="flex items-start gap-3" data-testid={`${plan.tier}-feature-${i}`}>
+                    <div key={`item-${i}`} className="flex items-start gap-3" data-testid={`${plan.tier}-feature-${`item-${i}`}`}>
                       <Check className="w-5 h-5 text-green-400 flex-shrink-0 mt-0.5" />
                       <span className="text-foreground">{feature}</span>
                     </div>

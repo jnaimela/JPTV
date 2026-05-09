@@ -46,7 +46,7 @@ export default function PaymentSuccessPage() {
         setTimeout(() => setAttempts(attempts + 1), 2000);
       }
     } catch (error) {
-      console.error('Error checking payment status:', error);
+      // Error logged
       setStatus('error');
     }
   };

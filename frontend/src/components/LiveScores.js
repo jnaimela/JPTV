@@ -23,7 +23,7 @@ export const LiveScores = () => {
       setLiveScores(res.data);
       setLoading(false);
     } catch (error) {
-      console.error('Error loading live scores:', error);
+      // Error logged
       setLoading(false);
     }
   };

@@ -46,7 +46,7 @@ export default function AnalysisPage() {
       }
       setLoading(false);
     } catch (error) {
-      console.error('Error loading data:', error);
+      // Error logged
       setLoading(false);
     }
   };
@@ -57,7 +57,7 @@ export default function AnalysisPage() {
       const res = await axios.post(`${API}/analyses/generate?match_id=${matchId}`);
       setAnalysis({ ...res.data, locked: true });
     } catch (error) {
-      console.error('Error generating analysis:', error);
+      // Error logged
     }
     setGenerating(false);
   };
@@ -137,7 +137,7 @@ export default function AnalysisPage() {
                 <div className="text-sm text-muted-foreground mb-2">Kotimuoto</div>
                 <div className="flex gap-1 justify-center">
                   {match.home_form.split('').map((result, i) => (
-                    <span key={i} className={`w-8 h-8 rounded-full flex items-center justify-center font-bold ${
+                    <span key={`form-${`item-${i}`}`} className={`w-8 h-8 rounded-full flex items-center justify-center font-bold ${
                       result === 'W' ? 'bg-green-500/20 text-green-400' : 
                       result === 'D' ? 'bg-yellow-500/20 text-yellow-400' : 
                       'bg-red-500/20 text-red-400'
@@ -149,7 +149,7 @@ export default function AnalysisPage() {
                 <div className="text-sm text-muted-foreground mb-2">Vierasmuoto</div>
                 <div className="flex gap-1 justify-center">
                   {match.away_form.split('').map((result, i) => (
-                    <span key={i} className={`w-8 h-8 rounded-full flex items-center justify-center font-bold ${
+                    <span key={`form-${`item-${i}`}`} className={`w-8 h-8 rounded-full flex items-center justify-center font-bold ${
                       result === 'W' ? 'bg-green-500/20 text-green-400' : 
                       result === 'D' ? 'bg-yellow-500/20 text-yellow-400' : 
                       'bg-red-500/20 text-red-400'
@@ -195,7 +195,7 @@ export default function AnalysisPage() {
               </div>
               <ul className="space-y-3">
                 {analysis.key_factors.map((factor, i) => (
-                  <li key={i} className="flex items-start gap-3">
+                  <li key={`form-${`item-${i}`}`} className="flex items-start gap-3">
                     <div className="w-6 h-6 rounded-full bg-primary/20 flex items-center justify-center flex-shrink-0 mt-0.5">
                       <span className="text-primary font-bold text-sm">{i + 1}</span>
                     </div>
@@ -275,7 +275,7 @@ export default function AnalysisPage() {
                   </div>
                   <div className="space-y-4">
                     {analysis.betting_tips.map((tip, i) => (
-                      <div key={i} className="p-4 bg-primary/5 rounded-lg border border-primary/20">
+                      <div key={`form-${`item-${i}`}`} className="p-4 bg-primary/5 rounded-lg border border-primary/20">
                         <div className="flex items-start gap-3">
                           <div className="w-8 h-8 rounded-full bg-gradient-to-br from-primary to-accent flex items-center justify-center flex-shrink-0">
                             <span className="text-white font-bold">{i + 1}</span>

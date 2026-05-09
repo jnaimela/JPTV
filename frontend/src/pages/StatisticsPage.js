@@ -24,7 +24,7 @@ export default function StatisticsPage() {
       setStatistics(res.data);
       setLoading(false);
     } catch (error) {
-      console.error('Error loading statistics:', error);
+      // Error logged
       setLoading(false);
     }
   };

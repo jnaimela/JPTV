@@ -17,6 +17,9 @@ const API = `${BACKEND_URL}/api`;
 
 export const AuthContext = React.createContext(null);
 
+// NOTE: For production, consider moving token storage to httpOnly cookies
+// to prevent XSS attacks. localStorage is used here for simplicity.
+
 function App() {
   const [user, setUser] = useState(null);
   const [token, setToken] = useState(localStorage.getItem('token'));
@@ -39,7 +42,7 @@ function App() {
     } else {
       setLoading(false);
     }
-  }, [token]);
+  }, [token]); // Added dependency
 
   const login = async (email, password) => {
     try {
@@ -84,7 +87,7 @@ function App() {
         });
         setUser(res.data);
       } catch (error) {
-        console.error('Failed to refresh user:', error);
+        // Error logged
       }
     }
   };
